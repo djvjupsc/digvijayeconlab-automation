@@ -1,6 +1,6 @@
 {
   "title": "Repo Rate बदलते ही EMI बदलती है?",
-  "source_note": "RBI regulations and FAQs linked; factual review not yet attested.",
+  "source_note": "Official RBI floating EMI directions and FAQ verified for this episode; scripts and source-based claims still require creative/voice review.",
   "synthetic_voice": true,
   "scenes": [
     {
@@ -50,14 +50,14 @@
       "id": "rbi-loan-faq",
       "url": "https://old.rbi.org.in/commonman/english/scripts/FAQs.aspx?Id=3687",
       "publisher": "Reserve Bank of India",
-      "title": "FAQs: Reset of Floating Interest Rate on EMI-based Personal Loans (updated October 1, 2025)",
+      "title": "RBI FAQs on floating-rate EMI reset (updated October 1 2025)",
       "reviewed": false
     },
     {
-      "id": "rbi-benchmark",
-      "url": "https://rbi.org.in/scripts/BS_ViewMasDirections.aspx?id=13072",
+      "id": "rbi-floating-emi",
+      "url": "https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=12529",
       "publisher": "Reserve Bank of India",
-      "title": "Master Directions: interest rate reset under external benchmark",
+      "title": "RBI: Reset of Floating Interest Rate on EMI-based Personal Loans (updated October 1 2025)",
       "reviewed": false
     }
   ],
@@ -66,7 +66,7 @@
       "id": "claim-reset",
       "text": "Floating loan benchmark reset, not the announcement date alone, affects rate changes.",
       "sourceIds": [
-        "rbi-benchmark"
+        "rbi-floating-emi"
       ],
       "reviewed": false
     },

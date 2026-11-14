@@ -94,9 +94,8 @@ def base_canvas(scene_number):
     rr(d,(42,55,318,100),19,(243,246,242))
     text_run(d,(62,64),"DIGVIJAY ECONLAB",19,(24,38,49))
     text_run(d,(44,128),f"ECONOMICS / {scene_number+1:02d}",22,(188,203,216))
-    d.line([(44,1056),(W-44,1056)], fill=accent,width=4)
-    text_run(d,(44,1082),"REPO RATE  /  EMI",20,(195,214,224))
-    text_run(d,(44,1168),"AI NARRATION • REVIEW COPY",18,(154,184,193))
+    # Keep the bottom quarter visually quiet for burned-in bilingual captions.
+    # Do not place production watermarks or labels behind subtitles.
     return im,d,accent
 
 def headline(d, lines, accent):
@@ -220,10 +219,14 @@ def short_captions(scenes,durations,path):
     return cues
 
 def make_thumbnail(first, output):
+    # Keep the cover text in a dedicated readable area; never cover the loan diagram.
     base=Image.open(first).convert("RGB").resize((1080,1920),Image.Resampling.LANCZOS)
     d=ImageDraw.Draw(base)
-    rr(d,(76,1345,1004,1650),55,(9,26,38))
-    text_run(d,(117,1409),"EMI अगले दिन?",80,(255,250,241),max_width=880)
+    rr(d,(36,1384,1044,1885),68,(6,23,41),outline=(247,106,87),width=5)
+    text_run(d,(102,1464),"EMI अगले दिन?",80,(255,252,242),max_width=860)
+    d.line([(102,1592),(850,1592)],fill=(248,111,91),width=13)
+    text_run(d,(104,1655),"RBI का असली नियम",55,(116,222,205),max_width=850)
+    text_run(d,(107,1793),"हिंदी ECONOMICS EXPLAINER",26,(197,214,220),max_width=860)
     base.save(output,quality=93,optimize=True)
 
 def make_metadata(source,path):
@@ -231,7 +234,7 @@ def make_metadata(source,path):
         "रेपो दर बदलने से हर होम लोन की EMI उसी दिन नहीं बदलती। "
         "Floating-rate loans में reset date और बैंक की शर्तें महत्वपूर्ण हैं।\n\n"
         "RBI official references:\n"
-        "https://rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=12942\n"
+        "https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=12529\n"
         "https://old.rbi.org.in/commonman/english/scripts/FAQs.aspx?Id=3687\n\n"
         "Educational content; not personal financial advice. Synthetic narration used.\n#Shorts #RepoRate #EMI #HindiEconomics"
     )
