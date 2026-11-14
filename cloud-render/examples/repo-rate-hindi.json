@@ -1,6 +1,6 @@
 {
   "title": "Repo Rate बदलते ही EMI बदलती है?",
-  "source_note": "Educational explainer; validate with RBI loan reset rules before publication.",
+  "source_note": "RBI regulations and FAQs linked; factual review not yet attested.",
   "synthetic_voice": true,
   "scenes": [
     {
@@ -44,5 +44,61 @@
       "visual": "calendar",
       "narration": "असर आपके बैंक की शर्तों और ब्याज दर रीसेट होने की तारीख पर निर्भर करता है। लोन के दस्तावेज़ ज़रूर पढ़ें।"
     }
-  ]
+  ],
+  "sources": [
+    {
+      "id": "rbi-loan-faq",
+      "url": "https://old.rbi.org.in/commonman/english/scripts/FAQs.aspx?Id=3687",
+      "publisher": "Reserve Bank of India",
+      "title": "FAQs: Reset of Floating Interest Rate on EMI-based Personal Loans (updated October 1, 2025)",
+      "reviewed": false
+    },
+    {
+      "id": "rbi-benchmark",
+      "url": "https://rbi.org.in/scripts/BS_ViewMasDirections.aspx?id=13072",
+      "publisher": "Reserve Bank of India",
+      "title": "Master Directions: interest rate reset under external benchmark",
+      "reviewed": false
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-reset",
+      "text": "Floating loan benchmark reset, not the announcement date alone, affects rate changes.",
+      "sourceIds": [
+        "rbi-benchmark"
+      ],
+      "reviewed": false
+    },
+    {
+      "id": "claim-emi-tenor",
+      "text": "A floating-rate loan interest reset can affect EMI and/or tenor.",
+      "sourceIds": [
+        "rbi-loan-faq"
+      ],
+      "reviewed": false
+    },
+    {
+      "id": "claim-disclosure",
+      "text": "Loan borrowers should inspect rate-reset communication and their own loan terms.",
+      "sourceIds": [
+        "rbi-loan-faq"
+      ],
+      "reviewed": false
+    }
+  ],
+  "review": {
+    "voiceConsentConfirmed": false,
+    "factualClaimInventoryReviewed": false,
+    "editorialApproved": false,
+    "rightsApproved": false,
+    "uploadApproved": false,
+    "note": "Production preview only. Sources linked, not human-verified in this workflow."
+  },
+  "rights": {
+    "visuals": "original_graphics",
+    "voice": "public_reference",
+    "music": "none",
+    "externalFootage": []
+  }
 }
