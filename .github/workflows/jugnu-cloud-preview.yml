@@ -2,6 +2,15 @@ name: Hindi TTS and FFmpeg cloud preview (no publishing)
 
 on:
   workflow_dispatch:
+    inputs:
+      voice_mode:
+        description: Public demo or protected private consented Hindi voice reference
+        type: choice
+        required: true
+        default: public_demo
+        options:
+          - public_demo
+          - private_hindi_prompt
   push:
     branches:
       - cloud-jugnu-ffmpeg-pilot
@@ -51,8 +60,29 @@ jobs:
       - name: Offline fail-closed quality tests
         run: python -m unittest discover -s cloud-render/tests -p "test_*.py" -v
 
-      - name: Generate Pocket TTS Hindi narration and render MP4
+      - name: Generate public demo Hindi narration (no credentials)
+        if: ${{ inputs.voice_mode != 'private_hindi_prompt' }}
+        env:
+          VOICE_MODE: public_demo
         run: python cloud-render/render.py --output cloud-render/output
+
+      - name: Generate protected consented private-voice narration
+        if: ${{ github.ref == 'refs/heads/main' && inputs.voice_mode == 'private_hindi_prompt' }}
+        env:
+          VOICE_MODE: private_hindi_prompt
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          PRIVATE_VOICE_HF_REPO: ${{ secrets.PRIVATE_VOICE_HF_REPO }}
+          PRIVATE_VOICE_HF_FILE: ${{ secrets.PRIVATE_VOICE_HF_FILE }}
+          PRIVATE_VOICE_HF_REV: ${{ secrets.PRIVATE_VOICE_HF_REV }}
+          PRIVATE_VOICE_SHA256: ${{ secrets.PRIVATE_VOICE_SHA256 }}
+          VOICE_CONSENT_CONFIRMED: ${{ secrets.VOICE_CONSENT_CONFIRMED }}
+        run: python cloud-render/render.py --output cloud-render/output
+
+      - name: Stop unsafe private-voice requests on non-main branches
+        if: ${{ github.ref != 'refs/heads/main' && inputs.voice_mode == 'private_hindi_prompt' }}
+        run: |
+          echo 'Private voices may only run after review on protected main.'
+          exit 1
 
       - name: Produce topic-specific motion graphics, captions and thumbnail
         run: python cloud-render/professional.py --output cloud-render/output
