@@ -29,8 +29,17 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event.repository.private == true
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    environment: youtube-private-upload
     steps:
+      - name: Require explicitly approved GitHub account for private upload
+        env:
+          APPROVED_ACTOR: ${{ secrets.YT_APPROVED_GITHUB_ACTOR }}
+          INVOKING_ACTOR: ${{ github.actor }}
+        run: |
+          if [ -z "$APPROVED_ACTOR" ] || [ "$INVOKING_ACTOR" != "$APPROVED_ACTOR" ]; then
+            echo "::error::Private upload blocked: this GitHub account was not explicitly authorized."
+            exit 1
+          fi
+
       - name: Check out verified upload gate
         uses: actions/checkout@v4
       - name: Confirm the producer run completed on trusted main branch
