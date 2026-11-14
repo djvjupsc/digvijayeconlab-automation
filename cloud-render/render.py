@@ -239,6 +239,10 @@ def run(input_path, output_path):
         samples=np.concatenate(chunk_arrays)
         if samples.size < model.sample_rate or not math.isfinite(float(samples.max())):
             raise RuntimeError(f"Missing/invalid TTS output for scene {idx}")
+        # Prevent float32 TTS excursions above 0 dBFS from clipping at AAC encode.
+        peak=float(np.max(np.abs(samples)))
+        if peak>0.92:
+            samples *= (0.92/peak)
         scipy.io.wavfile.write(wav, model.sample_rate, samples)
         duration = float(probe(wav)["format"]["duration"])
         if not 1.0 <= duration <= 50.0:
