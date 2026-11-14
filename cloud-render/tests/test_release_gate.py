@@ -19,7 +19,7 @@ class ManualReleaseTests(unittest.TestCase):
         self.digest=hashlib.sha256(movie).hexdigest()
         for file,data in {
             "quality-report.json":{"technical_qc":"PASSED","video_sha256":self.digest,"upload_ready":False,"subtitles":"estimated_timing_not_forced_aligned"},
-            "production-report.json":{"sha256":self.digest,"voice_eos_warnings":0,"upload_ready":False},
+            "production-report.json":{"sha256":self.digest,"voice_eos_warnings":0,"upload_ready":False,"narration":"User-consented private voice reference on Hindi Pocket TTS research model"},
             "youtube-metadata.json":{"privacyStatus":"private","ready_for_upload":False,"title":"Preview"},
         }.items():
             (self.root/file).write_text(json.dumps(data),encoding="utf-8")
@@ -30,6 +30,14 @@ class ManualReleaseTests(unittest.TestCase):
 
     def test_exact_hash_and_attestation_succeeds(self):
         self.assertEqual(verify_bundle(self.root,self.digest,PHRASE,NOTE)["status"],"reviewed_for_private_upload")
+
+    def test_public_demo_voice_blocks_upload(self):
+        p=self.root/"production-report.json"
+        report=json.loads(p.read_text(encoding="utf-8"))
+        report["narration"]="Public Hindi Pocket TTS research demo (not private Jugnu)"
+        p.write_text(json.dumps(report),encoding="utf-8")
+        with self.assertRaisesRegex(ValueError,"Public demo"):
+            verify_bundle(self.root,self.digest,PHRASE,NOTE)
 
     def test_wrong_hash_blocks(self):
         with self.assertRaises(ValueError):
