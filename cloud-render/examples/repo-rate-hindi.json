@@ -1,0 +1,48 @@
+{
+  "title": "Repo Rate बदलते ही EMI बदलती है?",
+  "source_note": "Educational explainer; validate with RBI loan reset rules before publication.",
+  "synthetic_voice": true,
+  "scenes": [
+    {
+      "headline": [
+        "Repo Rate",
+        "और आपकी EMI"
+      ],
+      "emphasis": "सच क्या है?",
+      "visual": "question",
+      "narration": "क्या RBI की रेपो दर बढ़ते ही आपकी ई एम आई अगले दिन बढ़ जाती है? ज़रूरी नहीं।"
+    },
+    {
+      "headline": [
+        "Repo Rate क्या है?"
+      ],
+      "emphasis": "RBI → BANK",
+      "visual": "bank",
+      "narration": "रेपो दर वह ब्याज दर है जिस पर भारतीय रिज़र्व बैंक बैंकों को छोटी अवधि के लिए धन देता है।"
+    },
+    {
+      "headline": [
+        "महंगाई पर असर"
+      ],
+      "emphasis": "ब्याज दरें",
+      "visual": "chart",
+      "narration": "महंगाई पर दबाव बढ़ने पर रिज़र्व बैंक रेपो दर का इस्तेमाल आर्थिक गतिविधियों को प्रभावित करने के लिए कर सकता है।"
+    },
+    {
+      "headline": [
+        "EMI या अवधि?"
+      ],
+      "emphasis": "दोनों संभव",
+      "visual": "emi",
+      "narration": "फ्लोटिंग रेट लोन में ब्याज बदलने पर बैंक आपकी ई एम आई, लोन की अवधि, या दोनों बदल सकता है।"
+    },
+    {
+      "headline": [
+        "फैसला कब लागू?"
+      ],
+      "emphasis": "Reset Date",
+      "visual": "calendar",
+      "narration": "असर आपके बैंक की शर्तों और ब्याज दर रीसेट होने की तारीख पर निर्भर करता है। लोन के दस्तावेज़ ज़रूर पढ़ें।"
+    }
+  ]
+}
