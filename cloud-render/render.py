@@ -145,7 +145,7 @@ def run(input_path, output_path):
         wav = output_path / f"{idx:02d}.wav"
         pic = output_path / f"{idx:02d}.png"
         part = output_path / f"{idx:02d}.mp4"
-        with torch.inference_mode():
+        with torch.no_grad():
             audio = model.generate_audio(voice, scene["narration"])
         samples = audio.detach().cpu().numpy().astype("float32")
         if samples.size < model.sample_rate or not math.isfinite(float(samples.max())):
