@@ -13,8 +13,7 @@ on:
           - private_hindi_prompt
   push:
     branches:
-      - cloud-jugnu-ffmpeg-pilot
-      - professional-cloud-production
+      - main
     paths:
       - cloud-render/**
       - .github/workflows/jugnu-cloud-preview.yml
@@ -32,6 +31,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
+      - name: Block private voice in public repository
+        if: ${{ inputs.voice_mode == 'private_hindi_prompt' && github.event.repository.private != true }}
+        run: |
+          echo "::error::Private custom voices cannot be rendered into artifacts in a public repository."
+          exit 1
+
       - name: Check out controlled script
         uses: actions/checkout@v4
 
@@ -67,7 +72,7 @@ jobs:
         run: python cloud-render/render.py --output cloud-render/output
 
       - name: Generate protected consented private-voice narration
-        if: ${{ github.ref == 'refs/heads/main' && inputs.voice_mode == 'private_hindi_prompt' }}
+        if: ${{ github.ref == 'refs/heads/main' && github.event.repository.private == true && inputs.voice_mode == 'private_hindi_prompt' }}
         env:
           VOICE_MODE: private_hindi_prompt
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
