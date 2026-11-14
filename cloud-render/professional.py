@@ -231,7 +231,7 @@ def make_metadata(source,path):
         "रेपो दर बदलने से हर होम लोन की EMI उसी दिन नहीं बदलती। "
         "Floating-rate loans में reset date और बैंक की शर्तें महत्वपूर्ण हैं।\n\n"
         "RBI official references:\n"
-        "https://rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=12942\n"
+        "https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=12529\n"
         "https://old.rbi.org.in/commonman/english/scripts/FAQs.aspx?Id=3687\n\n"
         "Educational content; not personal financial advice. Synthetic narration used.\n#Shorts #RepoRate #EMI #HindiEconomics"
     )
