@@ -14,6 +14,21 @@ MODEL_CONFIG = "hf://saryps-labs/pocket-tts-hindi/config.yaml@dbaa326069d20bfbda
 PUBLIC_VOICE = "hf://kyutai/tts-voices/alba-mackenna/casual.wav"
 SCENE_TYPES = {"question", "bank", "chart", "emi", "calendar"}
 
+def chunk_hindi(text, maximum=11):
+    """Tiny self-contained prompts avoid Pocket TTS max-length truncation."""
+    replacements = {"RBI": "आर बी आई", "EMI": "ई एम आई", "Repo Rate": "रेपो दर",
+                    "Floating": "फ्लोटिंग", "Rate": "रेट"}
+    for old, new in replacements.items():
+        text = text.replace(old,new)
+    words=re.sub(r"[।?!,;:]", " ", text).split()
+    if not words:
+        raise ValueError("Empty TTS script")
+    chunks=[" ".join(words[i:i+maximum]) for i in range(0,len(words),maximum)]
+    if len(chunks)>1 and len(chunks[-1].split())<=3:
+        chunks[-2] += " " + chunks[-1]
+        chunks.pop()
+    return chunks
+
 def invoke(args):
     subprocess.run(args, check=True, stdin=subprocess.DEVNULL)
 
@@ -192,13 +207,36 @@ def run(input_path, output_path):
     concat = []
     subtitles = []
     elapsed = 0.0
+    recovered_eos_warnings = 0
+    total_tts_chunks = 0
     for idx, scene in enumerate(source["scenes"]):
         wav = output_path / f"{idx:02d}.wav"
         pic = output_path / f"{idx:02d}.png"
         part = output_path / f"{idx:02d}.mp4"
-        with torch.no_grad():
-            audio = model.generate_audio(voice, scene["narration"])
-        samples = audio.detach().cpu().numpy().astype("float32")
+        import numpy as np
+        chunk_arrays=[]
+        for j,prompt in enumerate(chunk_hindi(scene["narration"])):
+            total_tts_chunks += 1
+            ok=False
+            for attempt in range(3):
+                torch.manual_seed(1879 + idx*100 + j*10 + attempt)
+                before=eos_audit.count
+                with torch.no_grad():
+                    audio = model.generate_audio(voice, prompt)
+                arr=audio.detach().cpu().numpy().astype("float32")
+                duration_s=arr.size/model.sample_rate
+                had_eos_error = eos_audit.count>before
+                if had_eos_error:
+                    recovered_eos_warnings += 1
+                if not had_eos_error and 0.3<duration_s<12.0 and np.isfinite(arr).all() and float(np.max(np.abs(arr)))>0.02:
+                    ok=True
+                    chunk_arrays.append(arr)
+                    break
+            if not ok:
+                raise RuntimeError(f"STOP: Unresolved EOS/quality failure in scene {idx+1}, Hindi chunk {j+1}; no video release")
+            if j<len(chunk_hindi(scene["narration"]))-1:
+                chunk_arrays.append(np.zeros(int(0.13*model.sample_rate),dtype=np.float32))
+        samples=np.concatenate(chunk_arrays)
         if samples.size < model.sample_rate or not math.isfinite(float(samples.max())):
             raise RuntimeError(f"Missing/invalid TTS output for scene {idx}")
         scipy.io.wavfile.write(wav, model.sample_rate, samples)
@@ -232,8 +270,9 @@ def run(input_path, output_path):
         "title": source["title"], "duration_seconds": float(result["format"]["duration"]),
         "tts": voice_label,
         "config": MODEL_CONFIG, "synthetic_voice": True,
-        "status": "preview_needs_narration_repair" if eos_audit.count else "preview_needs_human_review",
-        "tts_eos_warning_count": eos_audit.count, "upload_ready": False,
+        "status": "preview_needs_human_review",
+        "tts_eos_warning_count": 0, "tts_eos_retry_count": recovered_eos_warnings,
+        "tts_chunks": total_tts_chunks, "upload_ready": False,
         "publish_attempted": False, "source_note": source.get("source_note", "")
     }
     (output_path / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
