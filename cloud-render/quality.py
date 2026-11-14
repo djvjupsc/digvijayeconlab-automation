@@ -41,6 +41,16 @@ def inspect_script(path):
         if not source.get("id") or source["id"] in ids:
             raise ValueError("Duplicate or empty source id")
         ids.add(source["id"])
+    # The RBI episode must cite the exact documents reviewed for this script,
+    # not unrelated RBI pages that merely share the official domain.
+    if data.get("title")=="Repo Rate बदलते ही EMI बदलती है?":
+        expected={
+            "rbi-floating-emi":"https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=12529",
+            "rbi-loan-faq":"https://old.rbi.org.in/commonman/english/scripts/FAQs.aspx?Id=3687",
+        }
+        actual={item["id"]:item["url"] for item in sources}
+        if actual!=expected:
+            raise ValueError("RBI episode references do not match the fact-checked official EMI-reset sources")
     claims=data.get("claims")
     if not isinstance(claims,list) or len(claims)<3:
         raise ValueError("Missing factual claim inventory")
