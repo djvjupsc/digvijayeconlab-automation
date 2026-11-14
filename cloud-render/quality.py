@@ -36,7 +36,7 @@ def inspect_script(path):
     for source in sources:
         if not isinstance(source,dict) or source.get("reviewed") is not False:
             raise ValueError("Source review must start pending")
-        if not re.match(r"^https://(old\.)?rbi\.org\.in/",source.get("url",""),re.I):
+        if not re.match(r"^https://(www\.|old\.)?rbi\.org\.in/",source.get("url",""),re.I):
             raise ValueError("Pilot sources must be official RBI HTTPS pages")
         if not source.get("id") or source["id"] in ids:
             raise ValueError("Duplicate or empty source id")
