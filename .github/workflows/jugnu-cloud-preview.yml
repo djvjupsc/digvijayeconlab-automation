@@ -1,0 +1,61 @@
+name: Hindi TTS and FFmpeg cloud preview (no publishing)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - cloud-jugnu-ffmpeg-pilot
+    paths:
+      - cloud-render/**
+      - .github/workflows/jugnu-cloud-preview.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloud-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: CPU narration and vertical preview
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Check out controlled script
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system render tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-core
+
+      - name: Install CPU-only audio dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch==2.7.1 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install pocket-tts==4.0.1 Pillow==11.3.0 scipy==1.15.3
+
+      - name: Validate the Hindi script
+        run: python cloud-render/render.py --validate-only
+
+      - name: Generate Pocket TTS Hindi narration and render MP4
+        run: python cloud-render/render.py --output cloud-render/output
+
+      - name: Save preview for review, never publish
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hindi-tts-ffmpeg-review-${{ github.run_number }}
+          path: |
+            cloud-render/output/*.wav
+            cloud-render/output/preview.mp4
+            cloud-render/output/captions.srt
+            cloud-render/output/manifest.json
+          if-no-files-found: warn
+          retention-days: 7
