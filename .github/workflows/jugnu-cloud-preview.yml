@@ -2,9 +2,19 @@ name: Hindi TTS and FFmpeg cloud preview (no publishing)
 
 on:
   workflow_dispatch:
+    inputs:
+      voice_mode:
+        description: Public demo or protected private consented Hindi voice reference
+        type: choice
+        required: true
+        default: public_demo
+        options:
+          - public_demo
+          - private_hindi_prompt
   push:
     branches:
       - cloud-jugnu-ffmpeg-pilot
+      - professional-cloud-production
     paths:
       - cloud-render/**
       - .github/workflows/jugnu-cloud-preview.yml
@@ -33,7 +43,7 @@ jobs:
       - name: Install system render tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-core
+          sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-core fonts-dejavu-core
 
       - name: Install CPU-only audio dependencies
         run: |
@@ -44,8 +54,41 @@ jobs:
       - name: Validate the Hindi script
         run: python cloud-render/render.py --validate-only
 
-      - name: Generate Pocket TTS Hindi narration and render MP4
+      - name: Check claims inventory and approval gates before inference
+        run: python cloud-render/quality.py --preflight
+
+      - name: Offline fail-closed quality tests
+        run: python -m unittest discover -s cloud-render/tests -p "test_*.py" -v
+
+      - name: Generate public demo Hindi narration (no credentials)
+        if: ${{ inputs.voice_mode != 'private_hindi_prompt' }}
+        env:
+          VOICE_MODE: public_demo
         run: python cloud-render/render.py --output cloud-render/output
+
+      - name: Generate protected consented private-voice narration
+        if: ${{ github.ref == 'refs/heads/main' && inputs.voice_mode == 'private_hindi_prompt' }}
+        env:
+          VOICE_MODE: private_hindi_prompt
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          PRIVATE_VOICE_HF_REPO: ${{ secrets.PRIVATE_VOICE_HF_REPO }}
+          PRIVATE_VOICE_HF_FILE: ${{ secrets.PRIVATE_VOICE_HF_FILE }}
+          PRIVATE_VOICE_HF_REV: ${{ secrets.PRIVATE_VOICE_HF_REV }}
+          PRIVATE_VOICE_SHA256: ${{ secrets.PRIVATE_VOICE_SHA256 }}
+          VOICE_CONSENT_CONFIRMED: ${{ secrets.VOICE_CONSENT_CONFIRMED }}
+        run: python cloud-render/render.py --output cloud-render/output
+
+      - name: Stop unsafe private-voice requests on non-main branches
+        if: ${{ github.ref != 'refs/heads/main' && inputs.voice_mode == 'private_hindi_prompt' }}
+        run: |
+          echo 'Private voices may only run after review on protected main.'
+          exit 1
+
+      - name: Produce topic-specific motion graphics, captions and thumbnail
+        run: python cloud-render/professional.py --output cloud-render/output
+
+      - name: Decode final video and verify production artifacts
+        run: python cloud-render/quality.py --output cloud-render/output
 
       - name: Save preview for review, never publish
         if: always()
@@ -57,5 +100,11 @@ jobs:
             cloud-render/output/preview.mp4
             cloud-render/output/captions.srt
             cloud-render/output/manifest.json
+            cloud-render/output/professional.mp4
+            cloud-render/output/professional.srt
+            cloud-render/output/thumbnail.jpg
+            cloud-render/output/youtube-metadata.json
+            cloud-render/output/quality-report.json
+            cloud-render/output/production-report.json
           if-no-files-found: warn
           retention-days: 7
