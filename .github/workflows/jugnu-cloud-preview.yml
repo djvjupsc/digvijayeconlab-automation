@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - cloud-jugnu-ffmpeg-pilot
+      - professional-cloud-production
     paths:
       - cloud-render/**
       - .github/workflows/jugnu-cloud-preview.yml
@@ -33,7 +34,7 @@ jobs:
       - name: Install system render tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-core
+          sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-core fonts-dejavu-core
 
       - name: Install CPU-only audio dependencies
         run: |
@@ -44,8 +45,20 @@ jobs:
       - name: Validate the Hindi script
         run: python cloud-render/render.py --validate-only
 
+      - name: Check claims inventory and approval gates before inference
+        run: python cloud-render/quality.py --preflight
+
+      - name: Offline fail-closed quality tests
+        run: python -m unittest discover -s cloud-render/tests -p "test_*.py" -v
+
       - name: Generate Pocket TTS Hindi narration and render MP4
         run: python cloud-render/render.py --output cloud-render/output
+
+      - name: Produce topic-specific motion graphics, captions and thumbnail
+        run: python cloud-render/professional.py --output cloud-render/output
+
+      - name: Decode final video and verify production artifacts
+        run: python cloud-render/quality.py --output cloud-render/output
 
       - name: Save preview for review, never publish
         if: always()
@@ -57,5 +70,11 @@ jobs:
             cloud-render/output/preview.mp4
             cloud-render/output/captions.srt
             cloud-render/output/manifest.json
+            cloud-render/output/professional.mp4
+            cloud-render/output/professional.srt
+            cloud-render/output/thumbnail.jpg
+            cloud-render/output/youtube-metadata.json
+            cloud-render/output/quality-report.json
+            cloud-render/output/production-report.json
           if-no-files-found: warn
           retention-days: 7
