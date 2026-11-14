@@ -27,6 +27,9 @@ def verify_bundle(root, expected_hash, approval_phrase, reviewer_note):
         raise ValueError("Video did not pass its independent technical quality test")
     if production.get("sha256")!=digest or production.get("voice_eos_warnings")!=0:
         raise ValueError("Video production integrity failure")
+    voice_label=production.get("narration","")
+    if voice_label!="User-consented private voice reference on Hindi Pocket TTS research model":
+        raise ValueError("Public demo or unverified narrator cannot be released as custom-voice production")
     if metadata.get("privacyStatus")!="private" or metadata.get("ready_for_upload") is not False:
         raise ValueError("Private-only upload policy or original review lock changed")
     if qc.get("upload_ready") is not False or production.get("upload_ready") is not False:
