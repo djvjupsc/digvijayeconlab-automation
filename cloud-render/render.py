@@ -2,6 +2,7 @@
 """GitHub-only Pocket TTS Hindi + FFmpeg preview renderer. No channel access."""
 import argparse
 import json
+import logging
 import math
 import re
 import subprocess
@@ -152,6 +153,15 @@ def run(input_path, output_path):
     torch.set_num_threads(2)
     model = TTSModel.load_model(config=MODEL_CONFIG, temp=0.3)
     voice = model.get_state_for_audio_prompt(PUBLIC_VOICE)
+    class TTSEndOfSpeechAudit(logging.Handler):
+        def __init__(self):
+            super().__init__()
+            self.count = 0
+        def emit(self, record):
+            if "Maximum generation length reached without EOS" in record.getMessage():
+                self.count += 1
+    eos_audit = TTSEndOfSpeechAudit()
+    logging.getLogger("pocket_tts.models.tts_model").addHandler(eos_audit)
     concat = []
     subtitles = []
     elapsed = 0.0
@@ -195,7 +205,8 @@ def run(input_path, output_path):
         "title": source["title"], "duration_seconds": float(result["format"]["duration"]),
         "tts": "Saryps Labs Hindi Pocket TTS (not the user's private Jugnu voice)",
         "config": MODEL_CONFIG, "synthetic_voice": True,
-        "status": "preview_needs_human_review", "upload_ready": False,
+        "status": "preview_needs_narration_repair" if eos_audit.count else "preview_needs_human_review",
+        "tts_eos_warning_count": eos_audit.count, "upload_ready": False,
         "publish_attempted": False, "source_note": source.get("source_note", "")
     }
     (output_path / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
