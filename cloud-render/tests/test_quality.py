@@ -33,6 +33,14 @@ class QualityTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 inspect_script(self.save(Path(d)))
 
+    def test_unrelated_rbi_document_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            for source in self.source["sources"]:
+                if source["id"]=="rbi-floating-emi":
+                    source["url"]="https://rbi.org.in/scripts/BS_ViewMasDirections.aspx?id=13072"
+            with self.assertRaisesRegex(ValueError,"fact-checked official"):
+                inspect_script(self.save(Path(d)))
+
     def test_fake_claim_review_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             self.source["claims"][0]["reviewed"]=True
