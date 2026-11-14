@@ -57,6 +57,24 @@ def find_font():
         return str(choices[0])
     raise RuntimeError("Missing Hindi font: install fonts-noto-core")
 
+
+def draw_bilingual(draw, xy, content, size, color, measure_only=False):
+    """Shape Hindi in Noto Devanagari and Latin text in a proper Latin font."""
+    from PIL import ImageFont
+    hindi = ImageFont.truetype(find_font(), size)
+    latin_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    if not Path(latin_path).is_file():
+        raise RuntimeError("Missing Latin font: fonts-dejavu-core")
+    latin = ImageFont.truetype(latin_path, size)
+    x, y = xy
+    for span in re.findall(r"[\u0900-\u097F\u200C\u200D]+|[^\u0900-\u097F\u200C\u200D]+", content):
+        is_hindi = any("\u0900" <= ch <= "\u097F" for ch in span)
+        font = hindi if is_hindi else latin
+        if not measure_only:
+            draw.text((x, y), span, font=font, fill=color, language="hi" if is_hindi else "en")
+        x += draw.textlength(span, font=font, language="hi" if is_hindi else "en")
+    return x - xy[0]
+
 def draw_poster(scene, index, count, out):
     from PIL import Image, ImageDraw, ImageFont, features
     if not features.check("raqm"):
@@ -67,30 +85,26 @@ def draw_poster(scene, index, count, out):
     for y in range(h):
         k = y / h
         d.line([(0, y), (w, y)], fill=(round(9 + 7 * k), round(19 + 19 * k), round(34 + 17 * k)))
-    f = find_font()
-    bold = ImageFont.truetype(f, 62)
-    mid = ImageFont.truetype(f, 39)
-    small = ImageFont.truetype(f, 26)
     white, teal, muted = (240, 249, 249), (64, 222, 187), (154, 184, 198)
     d.rounded_rectangle((42, 47, 678, 125), radius=25, fill=(18, 43, 55))
-    d.text((67, 68), "DIGVIJAY ECONLAB", font=small, fill=teal)
-    d.text((58, 182), f"ECONOMICS  /  {index + 1:02d}", font=small, fill=muted)
+    draw_bilingual(d, (67, 68), "DIGVIJAY ECONLAB", 26, teal)
+    draw_bilingual(d, (58, 182), f"ECONOMICS  /  {index + 1:02d}", 26, muted)
     y = 248
     for line in scene["headline"]:
-        length = d.textbbox((0, 0), line, font=bold, language="hi")[2]
+        length = draw_bilingual(d, (0, 0), line, 62, white, measure_only=True)
         if length > w - 104:
             raise ValueError(f"Headline too wide: {line}")
-        d.text((53, y), line, font=bold, fill=white, language="hi")
+        draw_bilingual(d, (53, y), line, 62, white)
         y += 88
     d.rounded_rectangle((52, y + 14, 668, y + 102), radius=30, fill=(17, 71, 75))
-    d.text((76, y + 31), scene.get("emphasis", ""), font=mid, fill=teal, language="hi")
+    draw_bilingual(d, (76, y + 31), scene.get("emphasis", ""), 39, teal)
 
     cy = 815
     kind = scene["visual"]
     d.rounded_rectangle((53, 600, 667, 1033), radius=38, fill=(20, 43, 60), outline=(43, 90, 95), width=3)
     if kind == "question":
         d.ellipse((218, 679, 502, 963), outline=teal, width=12)
-        d.text((300, 686), "?", font=ImageFont.truetype(f, 165), fill=white)
+        draw_bilingual(d, (300, 686), "?", 165, white)
     elif kind == "bank":
         d.polygon([(190, 742), (360, 648), (530, 742)], fill=teal)
         d.rectangle((190, 747, 530, 776), fill=white)
@@ -107,7 +121,7 @@ def draw_poster(scene, index, count, out):
     elif kind == "emi":
         for j, (label, size) in enumerate([("EMI", 310), ("TENURE", 220)]):
             yy = 723 + j * 134
-            d.text((98, yy - 30), label, font=small, fill=muted)
+            draw_bilingual(d, (98, yy - 30), label, 26, muted)
             d.rounded_rectangle((100, yy + 14, 597, yy + 55), radius=15, fill=(43, 80, 92))
             d.rounded_rectangle((100, yy + 14, 100 + size, yy + 55), radius=15, fill=teal)
     else:
@@ -117,7 +131,7 @@ def draw_poster(scene, index, count, out):
             for xx in (240, 328, 416):
                 d.ellipse((xx - 11, yy - 11, xx + 11, yy + 11), fill=(27, 74, 88))
     d.line([(52, 1115), (668, 1115)], fill=(43, 93, 97), width=3)
-    d.text((55, 1141), "AI VOICE  •  PREVIEW ONLY", font=small, fill=muted)
+    draw_bilingual(d, (55, 1141), "AI VOICE  •  PREVIEW ONLY", 26, muted)
     d.rounded_rectangle((53, 1212, 667, 1224), radius=6, fill=(37, 77, 85))
     d.rounded_rectangle((53, 1212, 53 + round(614 * (index + 1) / count), 1224), radius=6, fill=teal)
     canvas.save(out)
