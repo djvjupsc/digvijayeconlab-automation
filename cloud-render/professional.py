@@ -287,7 +287,7 @@ def build(script,out):
     ass_style=(
         "FontName=Noto Sans Devanagari,FontSize=19,"
         "PrimaryColour=&H00FFFFFF,OutlineColour=&H00121B27,"
-        "BorderStyle=1,Outline=3,Shadow=1,Alignment=2,MarginV=245"
+        "BorderStyle=3,BackColour=&H88081321,Outline=2,Shadow=0,Alignment=2,MarginV=75"
     )
     destination=out/"professional.mp4"
     subpath=(out/"professional.srt").resolve().as_posix()
