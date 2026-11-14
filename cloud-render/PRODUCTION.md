@@ -1,6 +1,8 @@
 # DigvijayEconLab — GitHub cloud production (review-first)
 
-**Current contract:** This cloud workflow may produce a technical preview package, but cannot truthfully grant publication approval. It does not interact with the Termux SQLite database, restore its rejected projects, or bypass provenance/scene checks. The GitHub build is a separate production lineage.
+**Current contract:** This cloud workflow may produce a technical preview package, but cannot truthfully grant publication approval.
+
+**Public repository security:** On public repos the workflow blocks `private_hindi_prompt`; the uploader job also refuses to run unless the repository is private. Do not make voice recordings or private preview artifacts public. A private repository and protected credential setup are prerequisites to real custom narration and private uploading. It does not interact with the Termux SQLite database, restore its rejected projects, or bypass provenance/scene checks. The GitHub build is a separate production lineage.
 
 ## Output and controls
 
