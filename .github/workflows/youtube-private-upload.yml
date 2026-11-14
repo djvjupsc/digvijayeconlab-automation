@@ -26,7 +26,7 @@ permissions:
 
 jobs:
   upload-reviewed-private:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event.repository.private == true
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     environment: youtube-private-upload
