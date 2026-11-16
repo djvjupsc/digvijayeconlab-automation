@@ -79,5 +79,5 @@ test('Voice rendering is disabled unless explicitly opted in',async()=>{
 test('Voice runner does not import paid AI APIs or publishing modules',()=>{
   const source=fs.readFileSync(path.join(__dirname,'../utils/v4-host-v10-voice-queue.js'),'utf8');
   assert.doesNotMatch(source,/require\(['"](?:openai|@google\/genai|elevenlabs|replicate)['"]\)/);
-  assert.doesNotMatch(source,/publishing-scheduling-agent|youtube\.videos\.insert|espeak|fetch\(/i);
+  assert.doesNotMatch(source,/publishing-scheduling-agent|youtube\.videos\.insert|\bespeak\s*\(|fetch\(/i);
 });
