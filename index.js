@@ -382,6 +382,8 @@ class YouTubeAutomationAgent {
     // Optional read-only local V4 media gallery; never publishes or runs shell commands.
     require('./utils/v4-local-gallery').mountLocalV4Gallery(this.app);
     require('./utils/v4-local-readiness').mountLocalV4Readiness(this.app);
+    // Fixed Demand/Supply pilot: offline only, disabled unless explicitly enabled on device.
+    require('./utils/v4-demand-supply-pilot').mountV4Pilot(this.app, this.requireAPIKey());
 
     if (!process.env.API_KEY) {
       this.logger.warn('API_KEY is not set; mutating API routes are unprotected');
