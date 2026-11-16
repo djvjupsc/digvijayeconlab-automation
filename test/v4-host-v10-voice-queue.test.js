@@ -14,7 +14,7 @@ function story(format='short'){
   const counts={short:[35,35,35],medium:[115,115,115,115],long:[190,190,190,190,190,190]};
   const scenes=counts[format].map((n,i)=>({
     index:i+1,name:'Scene '+i,narration:words(n),claimIds:['source-claim'],
-    visual:{type:'concept-map',title:'Concept',nodes:['A','B']},
+    visual:{type:'concept-map',title:'Concept',nodes:['माँग','आपूर्ति']},
     audioFile:null,reviewRequired:true
   }));
   return {
