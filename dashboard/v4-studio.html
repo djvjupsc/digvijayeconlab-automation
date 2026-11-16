@@ -50,6 +50,11 @@ button{cursor:pointer}button:hover{border-color:var(--cyan)}button:disabled{opac
 <p class="small">Existing server runs its daily generation schedule at 06:00 local time while the app is running. Quality, claim-inventory, voice and publishing gates remain unchanged. This page cannot start the phone or synchronize GitHub code automatically.</p>
 </section>
 <section class="panel">
+<h2>Local V4 scene renders</h2>
+<p class="small">Preview of previously rendered offline V4 drafts and Android export files. This gallery is read-only.</p>
+<div id="v4-gallery" class="cards"><p class="muted">Scanning local V4 artifacts…</p></div>
+</section>
+<section class="panel">
 <h2>Content library <span class="small" id="count"></span></h2>
 <div id="cards" class="cards"><p class="muted">Loading productions…</p></div>
 </section>
@@ -92,6 +97,54 @@ async function api(url,options,retry){
 function asset(url){return typeof url==="string"&&url.startsWith("/api/content/")?url:null;}
 function addAsset(container,url,tag){const u=asset(url);if(!u)return false;const node=h(tag);node.src=u;if(tag==="video"){node.controls=true;node.preload="metadata";}else{node.alt="Scene preview";node.loading="lazy";}node.addEventListener("error",()=>node.replaceWith(txt("p","Media unavailable","small")));container.append(node);return true;}
 let state=null,activeId=null,busy=false;
+async function refreshV4(){
+ const gallery=el("v4-gallery");
+ try {
+  const data=await api("/api/v4-gallery");
+  const entries=Array.isArray(data.items)?data.items:[];
+  gallery.replaceChildren();
+  entries.slice(0,30).forEach(item=>{
+    const tile=txt("article","","tile");
+    const preview=h("div");
+    if(!addAsset(preview,item.thumbnail,"img"))preview.append(txt("div","Scene render","placeholder"));
+    tile.append(preview);
+    const body=txt("div","","tile-inner");
+    body.append(txt("h3",item.title),txt("p",(item.scenes||[]).length+" scene frames · Review only"));
+    const button=txt("button","Open V4 video & scenes");
+    button.type="button";
+    button.addEventListener("click",()=>openV4(item));
+    body.append(button);
+    tile.append(body);gallery.append(tile);
+  });
+  if(!entries.length)gallery.append(txt("p","No offline V4 renders were found in the approved local folders.","muted"));
+ }catch(e){
+  gallery.replaceChildren(txt("p","V4 gallery unavailable: "+e.message,"small"));
+ }
+}
+function openV4(item){
+ activeId=null;
+ el("detail").classList.remove("hidden");
+ el("detail-title").textContent=item.title||"Local V4 render";
+ el("detail-status").textContent="Local review · not approved";
+ const v=el("detail-video");v.pause();v.removeAttribute("src");v.load();
+ if(asset(item.video)){v.src=item.video;v.classList.remove("hidden");el("no-video").classList.add("hidden")}
+ else {v.classList.add("hidden");el("no-video").classList.remove("hidden")}
+ const thumb=el("preview-thumb");
+ if(asset(item.thumbnail)){thumb.src=item.thumbnail;thumb.classList.remove("hidden");el("no-thumb").classList.add("hidden")}
+ else {thumb.removeAttribute("src");thumb.classList.add("hidden");el("no-thumb").classList.remove("hidden")}
+ el("caption-link").classList.add("hidden");el("script-link").classList.add("hidden");
+ const scenes=el("scenes");scenes.replaceChildren();
+ (item.scenes||[]).forEach((scene,i)=>{
+   const box=txt("article","","scene");
+   box.append(txt("strong",scene.title||"Frame "+(i+1)));
+   addAsset(box,scene.image,"img");
+   scenes.append(box);
+ });
+ if(!scenes.childNodes.length)scenes.append(txt("p","No individual scene screenshots in this folder.","muted"));
+ el("shorts").replaceChildren(txt("p","Only locally generated V4 draft assets are shown. Publishing remains blocked.","muted"));
+ el("detail").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
 function metric(label,value){const box=txt("div","","metric");box.append(txt("span",label,"small"),txt("strong",value));return box;}
 async function refresh(){
  if(busy)return;busy=true;el("refresh").disabled=true;
@@ -125,6 +178,7 @@ async function refresh(){
     body.append(btn);tile.append(body);cards.append(tile);
   }
   if(!cards.childNodes.length)cards.append(txt("p","No videos yet. Start a draft or activate existing scheduler.","muted"));
+  await refreshV4();
   el("last").textContent="Updated "+new Date().toLocaleTimeString();
   message("Local production data loaded");
   if(activeId&&!items.some(x=>String(x.id)===activeId))el("detail").classList.add("hidden");
