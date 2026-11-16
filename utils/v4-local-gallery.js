@@ -78,10 +78,22 @@ async function itemForFolder(root, name) {
   };
 }
 async function downloadItem() {
-  const name = 'DemandSupply-Landscape-Review.mp4';
-  const thumb = 'DemandSupply-Landscape-Thumbnail.jpg';
-  const video = await regularFile(DOWNLOADS, name);
-  const thumbnail = await regularFile(DOWNLOADS, thumb);
+  // Only these known export names are eligible; never enumerate personal Downloads.
+  const candidates = [
+    ['DigvijayEconLab-DemandSupply-Corrected-Shorts-9x16.mp4',
+      'DigvijayEconLab-DemandSupply-Vertical-Cover.jpg'],
+    ['DemandSupply-Landscape-Review.mp4',
+      'DemandSupply-Landscape-Thumbnail.jpg']
+  ];
+  let name=null,thumb=null,video=null,thumbnail=null;
+  for (const [v,t] of candidates) {
+    const found=await regularFile(DOWNLOADS,v);
+    if (found) {
+      name=v;thumb=t;video=found;
+      thumbnail=await regularFile(DOWNLOADS,t);
+      break;
+    }
+  }
   if (!video && !thumbnail) return null;
   return {
     id:'downloads', title:'Demand & Supply — exported review',
