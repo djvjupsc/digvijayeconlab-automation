@@ -14,7 +14,7 @@ function story(format='short'){
   const counts={short:[35,35,35],medium:[115,115,115,115],long:[190,190,190,190,190,190]};
   const scenes=counts[format].map((n,i)=>({
     index:i+1,name:'Scene '+i,narration:words(n),claimIds:['source-claim'],
-    visual:{type:'concept-map',title:'Concept',nodes:['A','B']},
+    visual:{type:'concept-map',title:'Concept',nodes:['माँग','आपूर्ति']},
     audioFile:null,reviewRequired:true
   }));
   return {
@@ -120,4 +120,15 @@ test('Bootstrapping the worker does not silently switch to the Host V10 prompt',
   assert.equal(env.JUGNU_WORKER_IDLE_SECONDS,'120');
   assert.ok(env.PYTHONPATH.includes('pydantic-python-test'));
   assert.ok(env.LD_LIBRARY_PATH.includes('build-pic/src'));
+});
+
+test('Every validated storyboard preserves the typed scene visual needed by the renderer',()=>{
+  for(const format of ['short','medium','long']){
+    const data=story(format);
+    const out=validateStoryboard(data,data.topicId,format);
+    assert.ok(out.scenes.every(x=>x.visual.type==='concept-map'));
+  }
+  const data=story();
+  data.scenes[0].visual={type:'untrusted',title:'No render'};
+  assert.throws(()=>validateStoryboard(data,data.topicId,'short'),/unsupported visual/);
 });

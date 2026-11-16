@@ -10,6 +10,7 @@ const path=require('node:path');
 const crypto=require('node:crypto');
 const {spawn}=require('node:child_process');
 const readline=require('node:readline');
+const {validateVisual}=require('../scripts/v4-offline-course-pack');
 
 const HOME=os.homedir();
 const PROJECT=path.join(HOME,'digvijayeconlab-automation');
@@ -62,7 +63,8 @@ function validateStoryboard(data,topicId,format){
        q.text!==s.narration||q.voiceSynthesisVerified!==false||q.requestedWav!==null ||
        !Array.isArray(s.claimIds)||!s.claimIds.length||!s.visual||typeof s.name!=='string'||
        s.audioFile!==null||s.reviewRequired!==true)stop('scene/voice queue mismatch');
-    return {index:i+1,text:s.narration,chunks:splitNarration(s.narration),name:s.name};
+    return {index:i+1,text:s.narration,chunks:splitNarration(s.narration),
+      name:s.name,visual:validateVisual(s.visual,'V4_SCENE_'+(i+1))};
   });
   return {topicId,format,scenes};
 }
