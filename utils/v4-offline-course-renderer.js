@@ -9,6 +9,7 @@ const os=require('node:os');
 const crypto=require('node:crypto');
 const {spawn}=require('node:child_process');
 const {createSceneHTML}=require('./v4-generic-scene-html');
+const {assertCleanHyperframesLint}=require('./v4-hyperframes-lint');
 const {validateStoryboard,splitNarration}=require('./v4-host-v10-voice-queue');
 
 const HOME=os.homedir();
@@ -206,7 +207,7 @@ async function renderCourseVideo(topic,format,{progress=()=>{}}={}){
       },null,2),{flag:'wx',mode:0o600});
       const silent=path.join(folder,'silent.mp4');
       const lint=await run(HYPERFRAMES,['lint'],folder,90000,env);
-      if(!/0 error\(s\)/.test(lint))stop('HyperFrames lint did not report zero errors');
+      assertCleanHyperframesLint(lint);
       await run(HYPERFRAMES,[
         'render','.','--output',silent,'--format','mp4','--fps','24',
         '--resolution','landscape','--quality','looks','--workers','1',
