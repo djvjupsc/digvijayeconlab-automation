@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>DigvijayEconLab • Video Production Studio</title>
+<style>
+:root{--bg:#080f1c;--surface:#101e31;--line:#2b4661;--ink:#eff7ff;--muted:#afc4d8;--gold:#f3c56c;--cyan:#5ee0e0}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top right,#173958,var(--bg) 50%);color:var(--ink);font-family:system-ui,"Noto Sans Devanagari",sans-serif}
+header,main,footer{max-width:1250px;margin:auto;padding:22px 24px}header{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+a{color:var(--cyan)}.brand{text-decoration:none;color:var(--ink);font-weight:800;font-size:21px}.brand span{color:var(--gold)}.subtitle{color:var(--muted)}
+h1{font-size:clamp(25px,4vw,39px);line-height:1.2;margin:20px 0 6px}h2{font-size:20px;margin:0 0 12px}
+button,select{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:#18314b;color:var(--ink);font:inherit}
+button{cursor:pointer}button:hover{border-color:var(--cyan)}button:disabled{opacity:.4;cursor:default}.primary{background:#f2c46e;color:#111e2a;border:0;font-weight:800}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:24px 0}.panel{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:18px;margin:18px 0}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.metric{background:#13273d;border-radius:12px;padding:17px}.metric strong{display:block;font-size:27px;color:var(--gold)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}.tile{border:1px solid var(--line);border-radius:14px;background:#11263a;overflow:hidden}
+.tile-inner{padding:15px}.tile h3{font-size:17px;line-height:1.4;margin:0 0 9px}.tile p{color:var(--muted);font-size:13px}
+.tile img,.tile video{display:block;width:100%;aspect-ratio:16/9;object-fit:contain;background:#091524}
+.tile .placeholder{aspect-ratio:16/9;display:grid;place-items:center;color:var(--muted)}
+.small{font-size:12px;color:var(--muted)}.state{border:1px solid #486780;border-radius:99px;padding:4px 9px;font-size:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.muted{color:var(--muted)}.hidden{display:none!important}
+#detail h2{margin-top:4px}.detail-grid{display:grid;grid-template-columns:minmax(250px,1.5fr) minmax(230px,1fr);gap:16px}
+#detail-video{width:100%;max-height:530px;background:#030913}
+#preview-thumb{max-height:270px;max-width:100%;object-fit:contain;background:#030913}
+#scenes{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.scene{padding:10px;background:#10283d;border:1px solid var(--line);border-radius:12px}
+.scene img,.scene video{width:100%;aspect-ratio:16/9;object-fit:contain;background:#030913}
+#message{color:var(--gold)}.error{color:#ffb1ae!important}footer{font-size:13px;color:var(--muted)}
+@media(max-width:700px){header,main,footer{padding:15px}.detail-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><a class="brand" href="/">DIGVIJAY<span>ECONLAB</span></a><a href="/">← Main dashboard</a></header>
+<main>
+<p class="subtitle">LOCALHOST • PRODUCTION MONITOR</p>
+<h1>Video · Thumbnail · Scenes</h1>
+<p class="muted">यह screen मौजूदा local automation की वास्तविक files दिखाती है। Preview को publication approval नहीं माना जाएगा।</p>
+<div class="bar">
+<button id="refresh" type="button">↻ Refresh preview</button>
+<button id="generate" class="primary" type="button">＋ Generate draft</button>
+<span id="last" class="small">Not connected</span>
+</div>
+<p id="message" role="status" aria-live="polite"></p>
+<section class="metrics" id="metrics"></section>
+<section class="panel">
+<h2>Automatic pipeline</h2>
+<p id="automation" class="muted">Checking local scheduler…</p>
+<p class="small">Existing server runs its daily generation schedule at 06:00 local time while the app is running. Quality, claim-inventory, voice and publishing gates remain unchanged. This page cannot start the phone or synchronize GitHub code automatically.</p>
+</section>
+<section class="panel">
+<h2>Content library <span class="small" id="count"></span></h2>
+<div id="cards" class="cards"><p class="muted">Loading productions…</p></div>
+</section>
+<section id="detail" class="panel hidden">
+<div class="bar"><h2 id="detail-title">Video preview</h2><span id="detail-status" class="state"></span><button id="close" type="button">Close</button></div>
+<div class="detail-grid">
+<div><h2>Final video</h2><video id="detail-video" preload="metadata" playsinline controls></video><p id="no-video" class="small hidden">Real MP4 अभी उपलब्ध नहीं है। Placeholder video नहीं दिखाया जाएगा।</p></div>
+<div><h2>Thumbnail</h2><img id="preview-thumb" alt="Generated video thumbnail"><p id="no-thumb" class="small hidden">Thumbnail अभी नहीं बना।</p>
+<div class="actions"><a id="caption-link" class="hidden" href="#" download>Hindi captions</a><a id="script-link" class="hidden" href="#" target="_blank" rel="noopener">Script</a></div></div>
+</div>
+<h2 style="margin-top:22px">Scene-by-scene preview</h2>
+<div id="scenes"><p class="muted">No scenes available.</p></div>
+<h2 style="margin-top:22px">Vertical Shorts</h2>
+<div id="shorts" class="cards"></div>
+</section>
+</main>
+<footer>DigvijayEconLab • Local-only media previews • No automatic public upload</footer>
+<script>
+"use strict";
+(function(){
+const el=id=>document.getElementById(id);
+const h=document.createElement.bind(document);
+const key=()=>localStorage.getItem("yaa_api_key")||"";
+const txt=(tag,value,cls)=>{const n=h(tag);n.textContent=String(value===null||value===undefined?"":value);if(cls)n.className=cls;return n;};
+const message=(text,error)=>{el("message").textContent=text;el("message").classList.toggle("error",!!error);};
+async function api(url,options,retry){
+  const opts=options||{};
+  const headers=Object.assign({},opts.body?{"Content-Type":"application/json"}:{},key()?{"x-api-key":key()}:{});
+  const res=await fetch(url,Object.assign({},opts,{headers}));
+  if(res.status===401&&retry!==false){
+    const k=prompt("Local API_KEY (stored in this browser only):");
+    if(k===null)throw Error("API_KEY required");
+    localStorage.setItem("yaa_api_key",k.trim());
+    return api(url,options,false);
+  }
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok)throw Error(data.error||"Request failed ("+res.status+")");
+  return data;
+}
+function asset(url){return typeof url==="string"&&url.startsWith("/api/content/")?url:null;}
+function addAsset(container,url,tag){const u=asset(url);if(!u)return false;const node=h(tag);node.src=u;if(tag==="video"){node.controls=true;node.preload="metadata";}else{node.alt="Scene preview";node.loading="lazy";}node.addEventListener("error",()=>node.replaceWith(txt("p","Media unavailable","small")));container.append(node);return true;}
+let state=null,activeId=null,busy=false;
+function metric(label,value){const box=txt("div","","metric");box.append(txt("span",label,"small"),txt("strong",value));return box;}
+async function refresh(){
+ if(busy)return;busy=true;el("refresh").disabled=true;
+ try{
+  state=await api("/api/dashboard");
+  const s=state.system||{},items=Array.isArray(state.pipeline)?state.pipeline:[];
+  const jobs=Array.isArray(state.jobs)?state.jobs:[];
+  el("metrics").replaceChildren(
+    metric("Productions",items.length),
+    metric("Ready for review",items.filter(x=>["needs_review","needs_attention"].includes(x.review_status)).length),
+    metric("Active jobs",jobs.filter(x=>["queued","running"].includes(x.status)).length),
+    metric("Published",state.stats&&state.stats.published||0)
+  );
+  el("automation").textContent=(s.automationPaused?"Paused":s.setupRequired?"Setup required":"Scheduler controlled by main app")+
+    " · "+(s.initialized?"Server online":"Initializing")+
+    " · Only approved content may publish";
+  el("count").textContent="("+items.length+")";
+  const cards=el("cards");cards.replaceChildren();
+  for(const p of items.slice(0,50)){
+    const id=String(p.id||"");
+    if(!/^[a-zA-Z0-9_-]{1,100}$/.test(id))continue;
+    const tile=txt("article","","tile");
+    const thumb=h("div");
+    if(!p.hasThumbnail&&!p.assets?.thumbnail)thumb.append(txt("div","Thumbnail pending","placeholder"));
+    else if(!addAsset(thumb,"/api/content/"+encodeURIComponent(id)+"/asset/thumbnail","img"))thumb.append(txt("div","No thumbnail","placeholder"));
+    tile.append(thumb);
+    const body=txt("div","","tile-inner");
+    body.append(txt("h3",p.title||p.topic||"Untitled video"),txt("p","Status: "+(p.review_status||p.status||"unknown")));
+    const btn=txt("button","Open video, scenes & thumbnail");
+    btn.type="button";btn.addEventListener("click",()=>open(id));
+    body.append(btn);tile.append(body);cards.append(tile);
+  }
+  if(!cards.childNodes.length)cards.append(txt("p","No videos yet. Start a draft or activate existing scheduler.","muted"));
+  el("last").textContent="Updated "+new Date().toLocaleTimeString();
+  message("Local production data loaded");
+  if(activeId&&!items.some(x=>String(x.id)===activeId))el("detail").classList.add("hidden");
+ }catch(e){message(e.message,true)}
+ finally{busy=false;el("refresh").disabled=false}
+}
+async function open(id){
+  try{
+    const b=await api("/api/content/"+encodeURIComponent(id));
+    activeId=id;el("detail").classList.remove("hidden");
+    el("detail-title").textContent=b.title||b.script?.title||"Video preview";
+    el("detail-status").textContent=b.review_status||b.status||"draft";
+    const urls=b.assetUrls||{};
+    const v=el("detail-video");
+    v.pause();v.removeAttribute("src");v.load();
+    if(asset(urls.video)){v.src=urls.video;v.classList.remove("hidden");el("no-video").classList.add("hidden")}
+    else{v.classList.add("hidden");el("no-video").classList.remove("hidden")}
+    const img=el("preview-thumb");
+    if(asset(urls.thumbnail)){img.src=urls.thumbnail;img.classList.remove("hidden");el("no-thumb").classList.add("hidden")}
+    else{img.removeAttribute("src");img.classList.add("hidden");el("no-thumb").classList.remove("hidden")}
+    for(const [domName,target] of [["caption-link",urls.captions],["script-link",urls.script]]){
+      const link=el(domName);const safe=asset(target);
+      if(safe){link.href=safe;link.classList.remove("hidden")}else{link.classList.add("hidden")}
+    }
+    const sc=el("scenes");sc.replaceChildren();
+    const scenes=Array.isArray(b.scenes)?b.scenes:[];
+    scenes.forEach((scene,i)=>{
+      if(!scene||!scene.id||!/^[a-zA-Z0-9_-]{1,100}$/.test(String(scene.id)))return;
+      const c=txt("article","","scene");
+      c.append(txt("strong","Scene "+(i+1)+": "+(scene.label||scene.title||scene.type||"Untitled")));
+      const u="/api/content/"+encodeURIComponent(id)+"/scenes/"+encodeURIComponent(scene.id)+"/asset";
+      addAsset(c,u,"img");
+      c.append(txt("p",scene.status||scene.review_status||"Preview asset","small"));sc.append(c);
+    });
+    if(!sc.childNodes.length)sc.append(txt("p","No scene assets yet — review the production pipeline.","muted"));
+    const shorts=el("shorts");shorts.replaceChildren();
+    (Array.isArray(b.shorts)?b.shorts:[]).forEach((clip,i)=>{
+      const c=txt("article","","tile"),body=txt("div","","tile-inner");
+      addAsset(c,clip.assetUrls&&clip.assetUrls.video,"video");
+      body.append(txt("h3",clip.title||"Short "+(i+1)),txt("p",clip.status||"Draft"));
+      c.append(body);shorts.append(c);
+    });
+    if(!shorts.childNodes.length)shorts.append(txt("p","No approved Short drafts yet.","muted"));
+    el("detail").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(e){message(e.message,true)}
+}
+async function generate(){
+ if(!confirm("Create a PRIVATE review draft through the existing automation pipeline? This does not approve or upload the video."))return;
+ el("generate").disabled=true;
+ try{
+  const r=await api("/generate",{method:"POST",body:JSON.stringify({length:"short"})});
+  message("Draft generation queued: "+(r.result?.id||"accepted")+". Progress appears automatically.");
+  await refresh();
+ }catch(e){message(e.message,true)}
+ finally{el("generate").disabled=false}
+}
+el("refresh").addEventListener("click",refresh);
+el("generate").addEventListener("click",generate);
+el("close").addEventListener("click",()=>{el("detail-video").pause();el("detail").classList.add("hidden");activeId=null;});
+refresh();setInterval(()=>{if(!document.hidden)refresh()},20000);
+})();
+</script>
+</body>
+</html>
