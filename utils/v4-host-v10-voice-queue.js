@@ -84,17 +84,52 @@ function checkedProcess(binary,args,opts,timeout){
     child.once('close',(code,signal)=>finish(code===0?null:Error('Local command failed: '+String(code)+'/'+String(signal)+' '+stderr.slice(-180))));
   });
 }
+
+// Match the owner's known working Termux adapter's native Pocket TTS and
+// SentencePiece search paths. The bootstrap reader_high voice is deliberately
+// distinct from the pinned Host V10 voice used for EVERY inference request:
+// the Python worker loads its bootstrap voice without truncation, whereas its
+// per-request reference path uses get_state_for_audio_prompt(..., truncate=True).
+function buildJugnuWorkerEnv(reference=HOST,base=process.env){
+  if(typeof reference!=='string'||!reference.trim())stop('missing Host V10 reference');
+  const env={...base};
+  const pythonPaths=[
+    path.join(HOME,'jugnu-pocket-tts-test','pydantic-python-test'),
+    path.join(HOME,'sentencepiece-build-test','python-extension-test'),
+    env.PYTHONPATH
+  ];
+  env.PYTHONPATH=pythonPaths.filter(Boolean).join(path.delimiter);
+  const libraryPaths=[
+    path.join(HOME,'sentencepiece-build-test','build-pic','src'),
+    env.PREFIX ? path.join(env.PREFIX,'lib') : null,
+    env.LD_LIBRARY_PATH
+  ];
+  env.LD_LIBRARY_PATH=libraryPaths.filter(Boolean).join(path.delimiter);
+  env.OMP_NUM_THREADS=env.OMP_NUM_THREADS||'2';
+  env.MKL_NUM_THREADS=env.MKL_NUM_THREADS||'2';
+  env.JUGNU_MODEL_CONFIG=env.JUGNU_TTS_CONFIG||
+    path.join(HOME,'jugnu-pocket-tts-test','downloads','config.local.yaml');
+  env.JUGNU_REFERENCE_AUDIO=env.JUGNU_TTS_REFERENCE||
+    path.join(HOME,'jugnu-pocket-tts-inspect','docs','audio','voices','reader_high.mp3');
+  env.JUGNU_WORKER_IDLE_SECONDS=env.JUGNU_TTS_IDLE_TIMEOUT_SECONDS||'120';
+  env.HF_HUB_OFFLINE='1';
+  env.TRANSFORMERS_OFFLINE='1';
+  env.PYTHONUNBUFFERED='1';
+  return env;
+}
+function termuxPython(base=process.env){
+  return base.JUGNU_TTS_PYTHON ||
+    path.join(base.PREFIX||'/data/data/com.termux/files/usr','bin','python3.14');
+}
+
 class JugnuClient {
-  constructor({python='python3',worker=WORKER,reference=HOST,timeoutMs=900000}={}){
+  constructor({python=termuxPython(),worker=WORKER,reference=HOST,timeoutMs=900000}={}){
     this.python=python;this.worker=worker;this.reference=reference;this.timeoutMs=timeoutMs;
     this.child=null;this.lines=null;this.pending=null;this.ready=false;this.readyPending=null;
   }
   async start(){
     if(this.child)stop('worker already started');
-    const env={...process.env,
-      JUGNU_REFERENCE_AUDIO:this.reference,JUGNU_TTS_REFERENCE:this.reference,
-      HF_HUB_OFFLINE:'1',TRANSFORMERS_OFFLINE:'1',PYTHONUNBUFFERED:'1',
-      JUGNU_TTS_IDLE_TIMEOUT_SECONDS:'120'};
+    const env=buildJugnuWorkerEnv(this.reference);
     const child=spawn(this.python,[this.worker],{
       cwd:PROJECT,env,shell:false,stdio:['pipe','pipe','pipe']
     });
@@ -242,4 +277,4 @@ async function runHostV10(topic,format,{root=ROOT,clientFactory=()=>new JugnuCli
     if(client)await client.close().catch(()=>{});
   }
 }
-module.exports={splitNarration,validateStoryboard,JugnuClient,runHostV10,PINNED};
+module.exports={splitNarration,validateStoryboard,JugnuClient,runHostV10,PINNED,buildJugnuWorkerEnv,termuxPython};
