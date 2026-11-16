@@ -18,7 +18,7 @@ const SOURCE=path.join(HOME,'digvijayeconlab-tools','dve-style-v4-adapter','draf
 const HYPERFRAMES=path.join(HOME,'digvijayeconlab-tools','hyperframes-cli','node_modules','.bin','hyperframes');
 const BROWSER=path.join(process.env.PREFIX||'/missing-termux-prefix','bin','chromium-browser');
 const GSAP_HASH='92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb';
-const FILES=['hyperframes.json','meta.json','package.json','digvijayeconlab-video-style.css'];
+const FILES=['hyperframes.json','package.json','digvijayeconlab-video-style.css'];
 const PROFILES=new Set(['long','medium','short']);
 const SLUG=/^[a-z][a-z0-9-]{2,63}$/;
 function stop(msg){throw Error('V4_OFFLINE_RENDER: '+msg);}
@@ -180,6 +180,10 @@ async function renderCourseVideo(topic,format,{progress=()=>{}}={}){
         {topicTitle:title,duration:length}
       );
       await fs.writeFile(path.join(folder,'index.html'),html,{flag:'wx',mode:0o600});
+      await fs.writeFile(path.join(folder,'meta.json'),JSON.stringify({
+        id:topic+'-'+format+'-scene-'+String(i+1),name:title+' — '+scene.name,
+        createdAt:new Date().toISOString()
+      },null,2),{flag:'wx',mode:0o600});
       await fs.writeFile(path.join(folder,'scene.json'),JSON.stringify({
         slug:topic,chapter:story.topicId,subtitle:scene.name,
         intro_parts:{left:'Economics',right:format},intro_subtitle:scene.name,
