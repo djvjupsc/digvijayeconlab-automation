@@ -126,6 +126,13 @@ async function readInputs(topic,format){
     const stat=await fs.lstat(p);
     if(!stat.isDirectory()||stat.isSymbolicLink())stop('unsafe draft or voice directory');
   }
+  const packManifestFile=path.join(PACK,topic,'manifest.json');
+  await fileRegular(packManifestFile,200000);
+  const packManifest=JSON.parse(await fs.readFile(packManifestFile,'utf8'));
+  if(packManifest.topicId!==topic||packManifest.schemaVersion!==1||
+     typeof packManifest.title!=='string'||packManifest.title.length<3||packManifest.title.length>200||
+     packManifest.publishingAuthorized!==false||packManifest.autoUpload!==false||
+     packManifest.readiness!=='script_and_storyboard_only')stop('unsafe lesson pack manifest');
   const rawFile=path.join(dir,'storyboard.json');
   const voiceFile=path.join(dir,'host-v10','manifest.json');
   await fileRegular(rawFile,350000);
@@ -146,10 +153,10 @@ async function readInputs(topic,format){
     if(Math.abs(info.duration-approximated)>0.75)stop('WAV and chunk timing differ');
     durations.push(info.duration);
   }
-  return {dir,story,voice,durations};
+  return {dir,story,voice,durations,title:packManifest.title};
 }
 async function renderCourseVideo(topic,format,{progress=()=>{}}={}){
-  const {dir,story,voice,durations}=await readInputs(topic,format);
+  const {dir,story,voice,durations,title}=await readInputs(topic,format);
   await checkAssets();
   const completed=path.join(dir,'v4-video');
   try{await fs.lstat(completed);stop('video draft already exists; never overwrite');}
@@ -170,7 +177,7 @@ async function renderCourseVideo(topic,format,{progress=()=>{}}={}){
         path.join(folder,'assets','gsap.min.js'),require('node:fs').constants.COPYFILE_EXCL);
       const html=createSceneHTML(
         {name:scene.name,visual:story.scenes[i].visual},
-        {topicTitle:dataTitle(topic),duration:length}
+        {topicTitle:title,duration:length}
       );
       await fs.writeFile(path.join(folder,'index.html'),html,{flag:'wx',mode:0o600});
       await fs.writeFile(path.join(folder,'scene.json'),JSON.stringify({
@@ -250,5 +257,4 @@ async function renderCourseVideo(topic,format,{progress=()=>{}}={}){
     throw e;
   }
 }
-function dataTitle(topic){return topic.replace(/-/g,' ');}
 module.exports={renderCourseVideo,validateVoiceManifest,captionsForScenes,srt};
