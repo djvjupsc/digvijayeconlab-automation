@@ -7,6 +7,8 @@ This feature branch adds a **read-only V4 artifact gallery** and a local product
 * Studio URL after the code is **deployed to the Android Termux checkout and the existing server restarts**: `http://127.0.0.1:3456/v4-studio.html`.
 * Existing main dashboard: `http://127.0.0.1:3456/`. The sidebar has a V4 Production Studio link.
 * The studio shows existing production jobs, status, video previews, thumbnails, scene assets, Short drafts and the local V4 render gallery.
+* New read-only endpoint `/api/v4-readiness` checks pinned local V4 HTML/CSS/GSAP, protected Host V10 reference, approved video and whether Chromium/HyperFrames/Jugnu files exist. It **never** runs them or reports generation ready.
+* The Studio V4 **Generate** action is disabled until an actual tested, free-only V4/Host V10 worker is integrated. The existing 06:00 scheduler and existing generation routes have **not** been changed.
 * Scene/video files from the isolated V4 workspace are only streamed read-only and only to loopback requests; arbitrary path arguments, symlinks, other Downloads files, voice references, credentials and scripts are not exposed by the new gallery.
 * The existing 06:00 local-time scheduler stays unchanged. It produces content only while the Node server is running, the current strategy and dependencies are ready, and the current code path succeeds.
 * The preview's draft-generation button calls the preexisting `POST /generate` endpoint and requires the existing API key; it does **not** call YouTube publish-now or bypass review. It follows existing provider settings. To guarantee free-only, audit and select offline/free providers before using it.
