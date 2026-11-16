@@ -87,6 +87,7 @@ class V4PinnedBatchInstallSafetyTests(unittest.TestCase):
                 "node", "scripts/v4-one-shot-review.js", "--formats=short,medium,long"
             ])
             self.assertEqual(kwargs["env"]["DVE_V4_REVIEW_BATCH_ENABLED"], "true")
+            self.assertEqual(kwargs["env"]["DVE_V4_SCENE_SMOKE_ENABLED"], "true")
             self.assertEqual(kwargs["cwd"], mod.ROOT)
             self.assertIs(kwargs["check"], False)
 
