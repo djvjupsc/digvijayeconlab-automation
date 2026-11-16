@@ -39,7 +39,7 @@ button{cursor:pointer}button:hover{border-color:var(--cyan)}button:disabled{opac
 <p class="muted">यह screen मौजूदा local automation की वास्तविक files दिखाती है। Preview को publication approval नहीं माना जाएगा।</p>
 <div class="bar">
 <button id="refresh" type="button">↻ Refresh preview</button>
-<button id="generate" class="primary" type="button">＋ Generate draft</button>
+<button id="generate" class="primary" type="button" disabled title="Offline V4 renderer and Host V10 production gates are not yet connected">Offline generation — not yet verified</button>
 <span id="last" class="small">Not connected</span>
 </div>
 <p id="message" role="status" aria-live="polite"></p>
@@ -47,6 +47,7 @@ button{cursor:pointer}button:hover{border-color:var(--cyan)}button:disabled{opac
 <section class="panel">
 <h2>Automatic pipeline</h2>
 <p id="automation" class="muted">Checking local scheduler…</p>
+<p class="small">V4 generation remains OFF until offline voice/scene quality gates pass. The main app may use configured cloud providers; no remote generation starts from this V4 page.</p>
 <p class="small">Existing server runs its daily generation schedule at 06:00 local time while the app is running. Quality, claim-inventory, voice and publishing gates remain unchanged. This page cannot start the phone or synchronize GitHub code automatically.</p>
 </section>
 <section class="panel">
@@ -236,7 +237,7 @@ async function generate(){
  finally{el("generate").disabled=false}
 }
 el("refresh").addEventListener("click",refresh);
-el("generate").addEventListener("click",generate);
+// The V4 generation action is intentionally disabled until the offline engine passes production gates.
 el("close").addEventListener("click",()=>{el("detail-video").pause();el("detail").classList.add("hidden");activeId=null;});
 refresh();setInterval(()=>{if(!document.hidden)refresh()},20000);
 })();
