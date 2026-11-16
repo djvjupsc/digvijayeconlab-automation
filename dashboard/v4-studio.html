@@ -94,7 +94,7 @@ async function api(url,options,retry){
   if(!res.ok)throw Error(data.error||"Request failed ("+res.status+")");
   return data;
 }
-function asset(url){return typeof url==="string"&&url.startsWith("/api/content/")?url:null;}
+function asset(url){return typeof url==="string"&&(url.startsWith("/api/content/")||url.startsWith("/api/v4-gallery/"))?url:null;}
 function addAsset(container,url,tag){const u=asset(url);if(!u)return false;const node=h(tag);node.src=u;if(tag==="video"){node.controls=true;node.preload="metadata";}else{node.alt="Scene preview";node.loading="lazy";}node.addEventListener("error",()=>node.replaceWith(txt("p","Media unavailable","small")));container.append(node);return true;}
 let state=null,activeId=null,busy=false;
 async function refreshV4(){
