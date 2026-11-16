@@ -149,7 +149,10 @@ async function probeVideo(file) {
 }
 async function currentStatus() {
   try {
-    if (!await isUnlinkedFile(path.join(COMPLETED,'manifest.json'))) return {state:'not_generated',publishingAuthorized:false};
+    const directory = await fs.lstat(COMPLETED).catch(e=>{if(e.code==='ENOENT')return null;throw e;});
+    if (!directory) return {state:'not_generated',publishingAuthorized:false};
+    if(!directory.isDirectory() || directory.isSymbolicLink())return {state:'needs_attention',publishingAuthorized:false};
+    if (!await isUnlinkedFile(path.join(COMPLETED,'manifest.json'))) return {state:'needs_attention',publishingAuthorized:false};
     const raw=JSON.parse(await fs.readFile(path.join(COMPLETED,'manifest.json'),'utf8'));
     if(raw.schemaVersion!==1 || raw.topicId!=='demand_supply_v1' || raw.publishingAuthorized!==false) {
       return {state:'needs_attention',publishingAuthorized:false};
@@ -172,6 +175,8 @@ async function currentStatus() {
 async function runPilot(progress=()=>{}) {
   const prior=await currentStatus();
   if (prior.state!=='not_generated') throw Error('Existing pilot must not be replaced');
+  try { await fs.lstat(COMPLETED); throw Error('Pilot output already exists; preserving it'); }
+  catch (e) { if(e.code!=='ENOENT') throw e; }
   await requirePinned();
   await executable(BROWSER);
   await executable(CLI);
