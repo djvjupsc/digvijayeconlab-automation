@@ -57,3 +57,10 @@ test('Smoke worker has no publishing, TTS, remote API or scheduler integrations'
   assert.match(source,/autoUpload:false/);
   assert.match(source,/prior smoke output exists; refusing overwrite/);
 });
+
+test('Smoke scene root includes complete dimensions and matching registered timeline',()=>{
+  const html=createSceneHTML(SCENE,{topicTitle:'अर्थव्यवस्था का बुनियादी प्रवाह',duration:10});
+  assert.match(html,/<body data-composition-id="main" data-width="1920" data-height="1080" data-fps="24" data-duration="10\.000">/);
+  assert.match(html,/window\.__timelines\.main=tl/);
+  assert.match(html,/font-family:sans-serif/);
+});
