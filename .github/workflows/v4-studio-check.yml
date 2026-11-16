@@ -11,6 +11,8 @@ on:
       - 'utils/v4-local-readiness.js'
       - 'utils/v4-demand-supply-pilot.js'
       - 'test/v4-demand-supply-pilot.test.js'
+      - 'scripts/v4-safe-deploy.py'
+      - 'scripts/test_v4_safe_deploy.py'
       - '.github/workflows/v4-studio-check.yml'
   workflow_dispatch:
 permissions:
@@ -30,6 +32,10 @@ jobs:
           node --check utils/v4-demand-supply-pilot.js
           node --test test/v4-local-gallery.test.js test/v4-local-readiness.test.js test/v4-demand-supply-pilot.test.js
           node -e "const fs=require('fs'),vm=require('vm');const s=fs.readFileSync('dashboard/v4-studio.html','utf8');const m=s.match(/<script>([\\s\\S]*?)<\\/script>/);if(!m)throw Error('Studio JS missing');new vm.Script(m[1]);console.log('Studio JS syntax OK')"
+      - name: Verify pinned Termux installer safety and syntax
+        run: |
+          python3 -m py_compile scripts/v4-safe-deploy.py scripts/test_v4_safe_deploy.py
+          python3 -m unittest discover -s scripts -p 'test_v4_safe_deploy.py' -v
       - name: Check no publishing controls changed
         run: |
           git diff --check
