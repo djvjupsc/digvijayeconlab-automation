@@ -225,6 +225,7 @@ async function runHostV10(topic,format,{root=ROOT,clientFactory=()=>new JugnuCli
       if(!result.isFile()||result.size<1000)stop('scene voice concatenation failed');
       manifest.scenes.push({index:scene.index,output:path.basename(sceneOut),
         chunks:clips.length,estimatedDuration:clips.reduce((s,c)=>s+c.duration,0),
+        segments:clips.map((c,i)=>({text:scene.chunks[i],duration:c.duration})),
         userVoiceReviewRequired:true});
     }
     await fs.writeFile(path.join(staging,'manifest.json'),JSON.stringify(manifest,null,2)+'\n',
