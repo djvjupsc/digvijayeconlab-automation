@@ -76,3 +76,13 @@ test('Voice/video duration boundaries are hard validation',()=>{
   assert.throws(()=>render(curve,{duration:2}),/duration invalid/);
   assert.throws(()=>render(curve,{duration:121}),/duration invalid/);
 });
+
+test('HyperFrames root is explicitly 1920x1080 and matches the GSAP main timeline',()=>{
+  const html=render(curve,{duration:12});
+  assert.match(html,/<body data-composition-id="main" data-width="1920" data-height="1080" data-fps="24" data-duration="12\.000">/);
+  assert.match(html,/window\.__timelines\.main=tl/);
+  assert.match(html,/font-family:sans-serif/);
+  assert.doesNotMatch(html,/font-family:[^;}]*Noto Sans Devanagari/);
+  assert.doesNotMatch(html,/<link[^>]*https?:\/\//);
+  assert.doesNotThrow(()=>new vm.Script(inlineScript(html)));
+});

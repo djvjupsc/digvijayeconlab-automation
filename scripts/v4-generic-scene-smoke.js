@@ -57,7 +57,7 @@ async function command(binary,args,cwd,timeout=720000,env=process.env){
     }
     child.once('error',finish);
     child.once('close',(code,signal)=>finish(code===0?null:Error(
-      'local '+path.basename(binary)+' exit '+code+'/'+signal+': '+out.slice(-1200))));
+      'local '+path.basename(binary)+' exit '+code+'/'+signal+': '+out.slice(-6500))));
   });
 }
 function checkedInfo(info){
