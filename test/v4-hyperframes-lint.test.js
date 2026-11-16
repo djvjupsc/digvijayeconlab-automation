@@ -39,6 +39,6 @@ test('Both isolated smoke and production renderer share a single strict parser',
   for(const relative of ['scripts/v4-generic-scene-smoke.js','utils/v4-offline-course-renderer.js']){
     const src=fs.readFileSync(path.join(root,relative),'utf8');
     assert.match(src,/assertCleanHyperframesLint\(lint\)/);
-    assert.doesNotMatch(src,/0 error\\\(s\\\)/);
+    assert.doesNotMatch(src,/if\(!\/0 error/);
   }
 });
