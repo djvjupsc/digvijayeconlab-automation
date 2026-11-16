@@ -121,3 +121,14 @@ test('Bootstrapping the worker does not silently switch to the Host V10 prompt',
   assert.ok(env.PYTHONPATH.includes('pydantic-python-test'));
   assert.ok(env.LD_LIBRARY_PATH.includes('build-pic/src'));
 });
+
+test('Every validated storyboard preserves the typed scene visual needed by the renderer',()=>{
+  for(const format of ['short','medium','long']){
+    const data=story(format);
+    const out=validateStoryboard(data,data.topicId,format);
+    assert.ok(out.scenes.every(x=>x.visual.type==='concept-map'));
+  }
+  const data=story();
+  data.scenes[0].visual={type:'untrusted',title:'No render'};
+  assert.throws(()=>validateStoryboard(data,data.topicId,'short'),/unsupported visual/);
+});
