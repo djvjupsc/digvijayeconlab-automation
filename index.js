@@ -381,6 +381,7 @@ class YouTubeAutomationAgent {
     this.app.use(express.static(path.join(__dirname, 'dashboard')));
     // Optional read-only local V4 media gallery; never publishes or runs shell commands.
     require('./utils/v4-local-gallery').mountLocalV4Gallery(this.app);
+    require('./utils/v4-local-readiness').mountLocalV4Readiness(this.app);
 
     if (!process.env.API_KEY) {
       this.logger.warn('API_KEY is not set; mutating API routes are unprotected');
