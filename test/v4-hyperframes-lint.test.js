@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {isCleanHyperframesLint,assertCleanHyperframesLint}=require('../utils/v4-hyperframes-lint');
 
-test('Accepts the EXACT clean output observed on the owner's Android Termux CLI',()=>{
+test("Accepts the EXACT clean output observed on the owner's Android Termux CLI",()=>{
   const actual='◆  Linting .building-7hJSd5/index.html\n\n◇  0 errors, 0 warnings\n';
   assert.equal(isCleanHyperframesLint(actual),true);
   assert.equal(assertCleanHyperframesLint(actual),true);
