@@ -8,7 +8,7 @@ This feature branch adds a **read-only V4 artifact gallery** and a local product
 * Existing main dashboard: `http://127.0.0.1:3456/`. The sidebar has a V4 Production Studio link.
 * The studio shows existing production jobs, status, video previews, thumbnails, scene assets, Short drafts and the local V4 render gallery.
 * New read-only endpoint `/api/v4-readiness` checks pinned local V4 HTML/CSS/GSAP, protected Host V10 reference, approved video and whether Chromium/HyperFrames/Jugnu files exist. It **never** runs them or reports generation ready.
-* The Studio V4 **Generate** action is disabled until an actual tested, free-only V4/Host V10 worker is integrated. The existing 06:00 scheduler and existing generation routes have **not** been changed.
+* The Studio's **generic** Generate action remains disabled. A separate, opt-in **fixed Demand & Supply pilot** uses a pinned V4 template and existing Host V10 WAV narration. The pilot is disabled unless `DVE_V4_PILOT_ENABLED=true` is explicitly configured **on the device** and the main API_KEY is present. The existing 06:00 scheduler and existing generation routes have **not** been changed.
 * Scene/video files from the isolated V4 workspace are only streamed read-only and only to loopback requests; arbitrary path arguments, symlinks, other Downloads files, voice references, credentials and scripts are not exposed by the new gallery.
 * The existing 06:00 local-time scheduler stays unchanged. It produces content only while the Node server is running, the current strategy and dependencies are ready, and the current code path succeeds.
 * The preview's draft-generation button calls the preexisting `POST /generate` endpoint and requires the existing API key; it does **not** call YouTube publish-now or bypass review. It follows existing provider settings. To guarantee free-only, audit and select offline/free providers before using it.
@@ -30,6 +30,19 @@ The tested isolated Android build used these **local-only** files; these are NOT
 | Published-media quality state | HUMAN REVIEW REQUIRED |
 
 **Voice reference and generated video binaries remain local/private.** The current gallery can display known Android export names when the user has downloaded them into the phone's Downloads folder.
+
+## Restricted Demand & Supply offline pilot (experimental, not yet executed on Android)
+
+An additional local worker in `utils/v4-demand-supply-pilot.js` can render exactly one **10-second landscape Demand & Supply** video using the previously verified `step196` V4 HTML/GSAP scene and existing two Host V10 narrated WAV segments. It has a protected button in the new Studio, but remains off until one-time device-side enablement is explicitly configured.
+
+1. Inputs are hash-pinned: V4 HTML/CSS/GSAP, prior Host V10 reference and previously generated WAV files. The worker never edits or overwrites any of them.
+2. It runs only fixed local Chromium, HyperFrames, FFmpeg and FFprobe paths; it does not invoke a shell, paid API, dynamic code download, Git, TTS fallback or YouTube.
+3. Rendering creates the scene master, mixes narration with known timing, writes Hindi SRT and generates a thumbnail plus three preview PNG frames. Complete media is probed and fully decoded, then placed atomically under `data/v4-pilot/demand-supply-v1/` with a review-only manifest.
+4. The worker is single-flight, no-overwrite, local-loopback-only and requires `API_KEY` and `DVE_V4_PILOT_ENABLED=true`; the button never publishes. Incomplete output remains in a diagnostic staging folder for recovery, not as an approved video.
+5. The original WAV narration uses an economics shorthand about demand and supply rather than explicitly naming *quantities demanded and supplied*. The review manifest flags this; natural voice, factual attestation, rights, upload eligibility and human approval all remain incomplete.
+6. This is a narrow pilot, **not** an engine that produces new scripts or arbitrary economics lessons. New templates, complete long/medium/Short sequences, the fixed word-budget pipeline and actual daily automation remain unresolved. GitHub CI tests the deterministic code paths only; **a full run on Termux with actual media has not been performed**.
+
+Local endpoints after authorized deployment: `GET /api/v4-pilot/status`, `POST /api/v4-pilot/generate`, `GET /api/v4-pilot/assets/:name`. Assets are read-only and never include reference voices.
 
 ## What is already automatic versus not
 

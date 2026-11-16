@@ -9,6 +9,8 @@ on:
       - 'test/v4-local-gallery.test.js'
       - 'test/v4-local-readiness.test.js'
       - 'utils/v4-local-readiness.js'
+      - 'utils/v4-demand-supply-pilot.js'
+      - 'test/v4-demand-supply-pilot.test.js'
       - '.github/workflows/v4-studio-check.yml'
   workflow_dispatch:
 permissions:
@@ -25,7 +27,8 @@ jobs:
         run: |
           node --check utils/v4-local-gallery.js
           node --check utils/v4-local-readiness.js
-          node --test test/v4-local-gallery.test.js test/v4-local-readiness.test.js
+          node --check utils/v4-demand-supply-pilot.js
+          node --test test/v4-local-gallery.test.js test/v4-local-readiness.test.js test/v4-demand-supply-pilot.test.js
           node -e "const fs=require('fs'),vm=require('vm');const s=fs.readFileSync('dashboard/v4-studio.html','utf8');const m=s.match(/<script>([\\s\\S]*?)<\\/script>/);if(!m)throw Error('Studio JS missing');new vm.Script(m[1]);console.log('Studio JS syntax OK')"
       - name: Check no publishing controls changed
         run: |
