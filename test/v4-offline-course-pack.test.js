@@ -73,7 +73,7 @@ test('Curve drawings must be grounded in bounded, ordered points',()=>{
 });
 test('Script length and missing community format are hard failures',()=>{
   const d=payload();
-  d.variants.short.scenes[0].narration='कम शब्द';
+  d.variants.short.scenes[0].narration='बस थोड़े साधारण शब्द';
   assert.throws(()=>validateLesson(d),/short script length/);
   d.variants.short.scenes[0].narration=text(35);
   delete d.community;
