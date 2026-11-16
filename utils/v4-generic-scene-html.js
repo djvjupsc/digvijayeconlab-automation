@@ -62,7 +62,7 @@ function diagram(v){
   throw Error('V4_SCENE unknown diagram type');
 }
 const CSS=[
-'html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#06192b;color:#f0f8ff;font-family:system-ui,"Noto Sans Devanagari",sans-serif}',
+'html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#06192b;color:#f0f8ff;font-family:sans-serif}',
 '*{box-sizing:border-box}',
 'body{background:radial-gradient(circle at 82% 9%,#245173,transparent 46%),linear-gradient(142deg,#071728,#12314b);position:relative}',
 '.outline{position:absolute;inset:34px;border:1px solid #385778;border-radius:36px}',
@@ -94,7 +94,8 @@ function createSceneHTML(scene,options={}){
   return [
     '<!doctype html><html lang="hi"><head><meta charset="utf-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
-    '<style>',CSS,'</style><script src="assets/gsap.min.js"></script></head><body>',
+    '<style>',CSS,'</style><script src="assets/gsap.min.js"></script></head>',
+    '<body data-composition-id="main" data-width="1920" data-height="1080" data-fps="24" data-duration="',duration.toFixed(3),'">',
     '<div class="outline"></div><div class="brand">DigvijayEconLab</div>',
     '<div class="label">ECONOMICS • हिंदी</div>',
     '<h1 class="reveal">',esc(title),'</h1><h2 class="reveal">',esc(name),'</h2>',
