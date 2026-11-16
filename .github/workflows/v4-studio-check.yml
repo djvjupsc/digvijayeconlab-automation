@@ -1,0 +1,29 @@
+name: Local V4 Studio safety checks
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'dashboard/v4-studio.html'
+      - 'dashboard/index.html'
+      - 'utils/v4-local-gallery.js'
+      - 'test/v4-local-gallery.test.js'
+      - '.github/workflows/v4-studio-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check JavaScript syntax and local security tests
+        run: |
+          node --check utils/v4-local-gallery.js
+          node --test test/v4-local-gallery.test.js
+          node -e "const fs=require('fs'),vm=require('vm');const s=fs.readFileSync('dashboard/v4-studio.html','utf8');const m=s.match(/<script>([\\s\\S]*?)<\\/script>/);if(!m)throw Error('Studio JS missing');new vm.Script(m[1]);console.log('Studio JS syntax OK')"
+      - name: Check no publishing controls changed
+        run: |
+          git diff --check
