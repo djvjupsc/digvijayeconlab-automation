@@ -10,6 +10,7 @@ const os=require('node:os');
 const crypto=require('node:crypto');
 const {spawn}=require('node:child_process');
 const {createSceneHTML}=require('../utils/v4-generic-scene-html');
+const {assertCleanHyperframesLint}=require('../utils/v4-hyperframes-lint');
 
 const HOME=os.homedir();
 const PROJECT=path.join(HOME,'digvijayeconlab-automation');
@@ -122,7 +123,7 @@ async function renderScene({progress=()=>{}}={}){
       PRODUCER_LOW_MEMORY_MODE:'1'};
     progress('offline_lint');
     const lint=await command(CLI,['lint'],temp,90000,env);
-    if(!/0 error\(s\)/.test(lint))fail('HyperFrames lint has unconfirmed zero errors');
+    assertCleanHyperframesLint(lint);
     progress('render_dynamic_scene');
     const video=path.join(temp,'video.mp4');
     await command(CLI,[
