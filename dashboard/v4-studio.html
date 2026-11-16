@@ -51,6 +51,12 @@ button{cursor:pointer}button:hover{border-color:var(--cyan)}button:disabled{opac
 <p class="small">Existing server runs its daily generation schedule at 06:00 local time while the app is running. Quality, claim-inventory, voice and publishing gates remain unchanged. This page cannot start the phone or synchronize GitHub code automatically.</p>
 </section>
 <section class="panel">
+<h2>Offline V4 readiness</h2>
+<p class="small">Pinned scene, Host V10 reference, Chromium and renderer presence. No TTS, rendering, uploads or billing checks are run here.</p>
+<div id="v4-readiness" class="metrics"><p class="muted">Reading offline capabilities…</p></div>
+<p id="v4-readiness-status" class="small"></p>
+</section>
+<section class="panel">
 <h2>Local V4 scene renders</h2>
 <p class="small">Preview of previously rendered offline V4 drafts and Android export files. This gallery is read-only.</p>
 <div id="v4-gallery" class="cards"><p class="muted">Scanning local V4 artifacts…</p></div>
@@ -98,6 +104,25 @@ async function api(url,options,retry){
 function asset(url){return typeof url==="string"&&(url.startsWith("/api/content/")||url.startsWith("/api/v4-gallery/"))?url:null;}
 function addAsset(container,url,tag){const u=asset(url);if(!u)return false;const node=h(tag);node.src=u;if(tag==="video"){node.controls=true;node.preload="metadata";}else{node.alt="Scene preview";node.loading="lazy";}node.addEventListener("error",()=>node.replaceWith(txt("p","Media unavailable","small")));container.append(node);return true;}
 let state=null,activeId=null,busy=false;
+async function refreshReadiness(){
+ const area=el("v4-readiness");
+ const msg=el("v4-readiness-status");
+ try{
+  const data=await api("/api/v4-readiness");
+  area.replaceChildren();
+  for(const item of data.checks||[]){
+    const panel=txt("div","","metric");
+    panel.append(txt("span",item.label,"small"),txt("strong",item.status==="verified"?"✓":item.status==="present"?"●":"!"));
+    panel.append(txt("p",item.reason,"small"));
+    area.append(panel);
+  }
+  if(!area.childNodes.length)area.append(txt("p","No diagnostic information returned","muted"));
+  msg.textContent=data.v4AutomatedGenerationVerified?"Offline V4 automation verified":"OFFLINE V4 GENERATION NOT YET VERIFIED — preview only";
+ }catch(e){
+  area.replaceChildren(txt("p","Cannot read local readiness: "+e.message,"small"));
+  msg.textContent="Unverified";
+ }
+}
 async function refreshV4(){
  const gallery=el("v4-gallery");
  try {
@@ -180,6 +205,7 @@ async function refresh(){
   }
   if(!cards.childNodes.length)cards.append(txt("p","No videos yet. Start a draft or activate existing scheduler.","muted"));
   await refreshV4();
+  await refreshReadiness();
   el("last").textContent="Updated "+new Date().toLocaleTimeString();
   message("Local production data loaded");
   if(activeId&&!items.some(x=>String(x.id)===activeId))el("detail").classList.add("hidden");
