@@ -19,7 +19,7 @@ The tested isolated Android build used these **local-only** files; these are NOT
 | --- | --- |
 | Landscape base scene | `~/digvijayeconlab-tools/dve-style-v4-adapter/drafts/step196/index.html` |
 | HTML SHA-256 | `2929374e4d4f19d2715c09492484718c7a07bc03b8f2a2aed60fb2a5098ce807` |
-| Base stylesheet SHA-256 | `0dada425bac4d0df2bb61122eccb27e92d01f75a41e55983266b19f36a2c4` |
+| Base stylesheet SHA-256 | `0dada425bac4d0df2bb61122eccb27bf4d92d01f75a41e55983266b19f36a2c4` |
 | GSAP local asset SHA-256 | `92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb` |
 | Protected approved Repo Rate video SHA-256 | `cf3354cb10adec2de34c0805855a9895a31c7071afd56bc27e7842453ce3c4f7` |
 | Protected Host V10 reference SHA-256 | `853e490009a5f5964ea402a8bbf8cfb3b58796596b13b296b5cd19235dd3c9a4` |
