@@ -30,6 +30,8 @@ on:
       - 'scripts/v4-one-shot-review.js'
       - 'test/v4-one-shot-review.test.js'
       - 'test/v4-repo-rate-lesson.test.js'
+      - 'scripts/v4-batch-install.py'
+      - 'scripts/test_v4_batch_install.py'
       - 'test/v4-host-v10-voice-queue.test.js'
       - 'utils/v4-host-v10-voice-queue.js'
       - 'test/v4-offline-course-pack.test.js'
@@ -64,8 +66,9 @@ jobs:
           node -e "const fs=require('fs'),vm=require('vm');const s=fs.readFileSync('dashboard/v4-studio.html','utf8');const m=s.match(/<script>([\\s\\S]*?)<\\/script>/);if(!m)throw Error('Studio JS missing');new vm.Script(m[1]);console.log('Studio JS syntax OK')"
       - name: Verify pinned Termux installer safety and syntax
         run: |
-          python3 -m py_compile scripts/v4-safe-deploy.py scripts/test_v4_safe_deploy.py
+          python3 -m py_compile scripts/v4-safe-deploy.py scripts/test_v4_safe_deploy.py scripts/v4-batch-install.py scripts/test_v4_batch_install.py
           python3 -m unittest discover -s scripts -p 'test_v4_safe_deploy.py' -v
+          python3 -m unittest discover -s scripts -p 'test_v4_batch_install.py' -v
       - name: Check no publishing controls changed
         run: |
           git diff --check
