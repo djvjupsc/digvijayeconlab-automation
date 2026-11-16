@@ -264,6 +264,7 @@ def main() -> int:
     print("All outputs remain private and require academic/voice/video review.", flush=True)
     env = os.environ.copy()
     env["DVE_V4_REVIEW_BATCH_ENABLED"] = "true"
+    env["DVE_V4_SCENE_SMOKE_ENABLED"] = "true"
     # This is deliberately foreground/synchronous. We must not imply that
     # a future/background job will finish after the assistant's response.
     result = subprocess.run(
