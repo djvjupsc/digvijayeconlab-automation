@@ -13,6 +13,8 @@ on:
       - 'test/v4-demand-supply-pilot.test.js'
       - 'test/v4-studio-auth-preview.test.js'
       - 'scripts/v4-safe-deploy.py'
+      - 'scripts/v4-offline-course-pack.js'
+      - 'test/v4-offline-course-pack.test.js'
       - 'scripts/test_v4_safe_deploy.py'
       - '.github/workflows/v4-studio-check.yml'
   workflow_dispatch:
@@ -31,7 +33,8 @@ jobs:
           node --check utils/v4-local-gallery.js
           node --check utils/v4-local-readiness.js
           node --check utils/v4-demand-supply-pilot.js
-          node --test test/v4-local-gallery.test.js test/v4-local-readiness.test.js test/v4-demand-supply-pilot.test.js test/v4-studio-auth-preview.test.js
+          node --check scripts/v4-offline-course-pack.js
+          node --test test/v4-local-gallery.test.js test/v4-local-readiness.test.js test/v4-demand-supply-pilot.test.js test/v4-studio-auth-preview.test.js test/v4-offline-course-pack.test.js
           node -e "const fs=require('fs'),vm=require('vm');const s=fs.readFileSync('dashboard/v4-studio.html','utf8');const m=s.match(/<script>([\\s\\S]*?)<\\/script>/);if(!m)throw Error('Studio JS missing');new vm.Script(m[1]);console.log('Studio JS syntax OK')"
       - name: Verify pinned Termux installer safety and syntax
         run: |
