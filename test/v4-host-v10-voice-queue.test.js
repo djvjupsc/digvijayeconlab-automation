@@ -3,7 +3,7 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const {splitNarration,validateStoryboard,PINNED}=require('../utils/v4-host-v10-voice-queue');
+const {splitNarration,validateStoryboard,PINNED,buildJugnuWorkerEnv,termuxPython,JugnuClient}=require('../utils/v4-host-v10-voice-queue');
 const {main}=require('../scripts/v4-render-host-v10');
 
 function words(n){
@@ -80,4 +80,44 @@ test('Voice runner does not import paid AI APIs or publishing modules',()=>{
   const source=fs.readFileSync(path.join(__dirname,'../utils/v4-host-v10-voice-queue.js'),'utf8');
   assert.doesNotMatch(source,/require\(['"](?:openai|@google\/genai|elevenlabs|replicate)['"]\)/);
   assert.doesNotMatch(source,/publishing-scheduling-agent|youtube\.videos\.insert|\bespeak\s*\(|fetch\(/i);
+});
+
+
+test('Termux native Jugnu startup uses known working Python and library locations',()=>{
+  const base={
+    PREFIX:'/data/data/com.termux/files/usr',
+    PYTHONPATH:'/safe/custom/python',
+    LD_LIBRARY_PATH:'/safe/custom/native',
+    JUGNU_TTS_CONFIG:'/offline/model/config.local.yaml',
+    JUGNU_TTS_IDLE_TIMEOUT_SECONDS:'140',
+    OMP_NUM_THREADS:'3'
+  };
+  const env=buildJugnuWorkerEnv('/voices/host-v10.wav',base);
+  assert.equal(base.JUGNU_MODEL_CONFIG,undefined);
+  assert.equal(env.JUGNU_MODEL_CONFIG,'/offline/model/config.local.yaml');
+  assert.equal(env.JUGNU_WORKER_IDLE_SECONDS,'140');
+  assert.equal(env.OMP_NUM_THREADS,'3');
+  assert.equal(env.MKL_NUM_THREADS,'2');
+  assert.equal(env.HF_HUB_OFFLINE,'1');
+  assert.equal(env.TRANSFORMERS_OFFLINE,'1');
+  assert.equal(env.PYTHONUNBUFFERED,'1');
+  assert.equal(env.JUGNU_REFERENCE_AUDIO.endsWith('/reader_high.mp3'),true);
+  assert.notEqual(env.JUGNU_REFERENCE_AUDIO,'/voices/host-v10.wav');
+  assert.ok(env.PYTHONPATH.includes('jugnu-pocket-tts-test/pydantic-python-test'));
+  assert.ok(env.PYTHONPATH.includes('sentencepiece-build-test/python-extension-test'));
+  assert.ok(env.PYTHONPATH.endsWith('/safe/custom/python'));
+  assert.ok(env.LD_LIBRARY_PATH.includes('sentencepiece-build-test/build-pic/src'));
+  assert.ok(env.LD_LIBRARY_PATH.includes('/data/data/com.termux/files/usr/lib'));
+  assert.ok(env.LD_LIBRARY_PATH.endsWith('/safe/custom/native'));
+  assert.equal(termuxPython(base),'/data/data/com.termux/files/usr/bin/python3.14');
+  assert.equal(termuxPython({...base,JUGNU_TTS_PYTHON:'/opt/local/python'}),
+    '/opt/local/python');
+  assert.equal(new JugnuClient({python:'/sandbox/python'}).reference.endsWith('.wav'),true);
+});
+test('Bootstrapping the worker does not silently switch to the Host V10 prompt',()=>{
+  const env=buildJugnuWorkerEnv(undefined,{PREFIX:'/data/data/com.termux/files/usr'});
+  assert.ok(env.JUGNU_REFERENCE_AUDIO.includes('reader_high.mp3'));
+  assert.equal(env.JUGNU_WORKER_IDLE_SECONDS,'120');
+  assert.ok(env.PYTHONPATH.includes('pydantic-python-test'));
+  assert.ok(env.LD_LIBRARY_PATH.includes('build-pic/src'));
 });
