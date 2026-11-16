@@ -107,8 +107,85 @@ async function api(url,options,retry){
   if(!res.ok)throw Error(data.error||"Request failed ("+res.status+")");
   return data;
 }
-function asset(url){return typeof url==="string"&&(url.startsWith("/api/content/")||url.startsWith("/api/v4-gallery/"))?url:null;}
-function addAsset(container,url,tag){const u=asset(url);if(!u)return false;const node=h(tag);node.src=u;if(tag==="video"){node.controls=true;node.preload="metadata";}else{node.alt="Scene preview";node.loading="lazy";}node.addEventListener("error",()=>node.replaceWith(txt("p","Media unavailable","small")));container.append(node);return true;}
+// Native <video>/<img> do not send x-api-key. Fetch authorized local media
+// as bounded blobs; never place the API key in a media URL or a query string.
+const MEDIA_FILE_LIMIT=48*1024*1024,MEDIA_SESSION_LIMIT=96*1024*1024;
+const mediaCache=new Map();
+let mediaBytes=0;
+function asset(url){
+ return typeof url==="string" && /^\\/api\\/(?:content\\/|v4-gallery\\/|v4-pilot\\/assets\\/)/.test(url)
+   && !url.includes("..") && !url.includes("?") && !url.includes("#") ? url : null;
+}
+async function protectedResponse(url, retry=true){
+ const res=await fetch(url,{headers:key()?{"x-api-key":key()}:{}});
+ if(res.status===401 && retry){
+   const k=prompt("Local API_KEY for protected previews:");
+   if(k===null)throw Error("API_KEY required to view protected media");
+   localStorage.setItem("yaa_api_key",k.trim());
+   return protectedResponse(url,false);
+ }
+ if(!res.ok)throw Error("Protected media HTTP "+res.status);
+ return res;
+}
+async function mediaObjectUrl(url){
+ if(mediaCache.has(url))return mediaCache.get(url);
+ const task=(async()=>{
+   const res=await protectedResponse(url);
+   const size=Number(res.headers.get("content-length"));
+   if(Number.isFinite(size) && size>MEDIA_FILE_LIMIT)throw Error("Media exceeds the safe preview size limit");
+   let blob;
+   if(!res.body || !res.body.getReader){
+     blob=await res.blob();
+     if(blob.size>MEDIA_FILE_LIMIT)throw Error("Media exceeds the safe preview size limit");
+   }else{
+     const reader=res.body.getReader(),parts=[];
+     let bytes=0;
+     try{
+       while(true){
+         const {done,value}=await reader.read();
+         if(done)break;
+         bytes+=value.byteLength;
+         if(bytes>MEDIA_FILE_LIMIT){
+           await reader.cancel();
+           throw Error("Media exceeds the safe preview size limit");
+         }
+         parts.push(value);
+       }
+     }finally{reader.releaseLock();}
+     blob=new Blob(parts,{type:res.headers.get("content-type")||"application/octet-stream"});
+   }
+   if(mediaBytes+blob.size>MEDIA_SESSION_LIMIT)throw Error("Preview memory budget reached; reload the Studio");
+   mediaBytes+=blob.size;
+   return URL.createObjectURL(blob);
+ })();
+ mediaCache.set(url,task);
+ try{return await task;}catch(e){mediaCache.delete(url);throw e;}
+}
+function setMediaSrc(node,url){
+ const u=asset(url);
+ node.dataset.v4MediaPath=u||"";
+ node.removeAttribute("src");
+ if(!u)return;
+ mediaObjectUrl(u).then(blobUrl=>{
+   if(node.dataset.v4MediaPath===u && node.isConnected)node.src=blobUrl;
+ }).catch(e=>{
+   if(node.dataset.v4MediaPath!==u || !node.isConnected)return;
+   if(node.id==="detail-video"){
+     node.classList.add("hidden");el("no-video").classList.remove("hidden");
+   }else if(node.id==="preview-thumb"){
+     node.classList.add("hidden");el("no-thumb").classList.remove("hidden");
+   }else node.replaceWith(txt("p","Media preview unavailable","small"));
+   message("Protected media: "+e.message,true);
+ });
+}
+function addAsset(container,url,tag){
+ const u=asset(url);if(!u)return false;
+ const node=h(tag);
+ if(tag==="video"){node.controls=true;node.preload="metadata";node.playsInline=true;}
+ else{node.alt="Scene preview";node.loading="lazy";}
+ node.addEventListener("error",()=>node.replaceWith(txt("p","Media unavailable","small")));
+ container.append(node);setMediaSrc(node,u);return true;
+}
 let state=null,activeId=null,busy=false;
 async function refreshReadiness(){
  const area=el("v4-readiness");
@@ -140,7 +217,7 @@ async function refreshPilot(){
     gallery.replaceChildren();
     if(data.media){
       const videoCard=txt("article","","tile");
-      const vid=h("video");vid.controls=true;vid.playsInline=true;vid.preload="metadata";vid.src=data.media.video;
+      const vid=h("video");vid.controls=true;vid.playsInline=true;vid.preload="metadata";setMediaSrc(vid,data.media.video);
       videoCard.append(vid,txt("div","Finished review-only MP4","tile-inner"));gallery.append(videoCard);
       const thumbCard=txt("article","","tile");
       addAsset(thumbCard,data.media.thumbnail,"img");
@@ -195,11 +272,11 @@ function openV4(item){
  el("detail").classList.remove("hidden");
  el("detail-title").textContent=item.title||"Local V4 render";
  el("detail-status").textContent="Local review · not approved";
- const v=el("detail-video");v.pause();v.removeAttribute("src");v.load();
- if(asset(item.video)){v.src=item.video;v.classList.remove("hidden");el("no-video").classList.add("hidden")}
+ const v=el("detail-video");v.pause();v.dataset.v4MediaPath="";v.removeAttribute("src");v.load();
+ if(asset(item.video)){setMediaSrc(v,item.video);v.classList.remove("hidden");el("no-video").classList.add("hidden")}
  else {v.classList.add("hidden");el("no-video").classList.remove("hidden")}
  const thumb=el("preview-thumb");
- if(asset(item.thumbnail)){thumb.src=item.thumbnail;thumb.classList.remove("hidden");el("no-thumb").classList.add("hidden")}
+ if(asset(item.thumbnail)){setMediaSrc(thumb,item.thumbnail);thumb.classList.remove("hidden");el("no-thumb").classList.add("hidden")}
  else {thumb.removeAttribute("src");thumb.classList.add("hidden");el("no-thumb").classList.remove("hidden")}
  el("caption-link").classList.add("hidden");el("script-link").classList.add("hidden");
  const scenes=el("scenes");scenes.replaceChildren();
@@ -264,11 +341,11 @@ async function open(id){
     el("detail-status").textContent=b.review_status||b.status||"draft";
     const urls=b.assetUrls||{};
     const v=el("detail-video");
-    v.pause();v.removeAttribute("src");v.load();
-    if(asset(urls.video)){v.src=urls.video;v.classList.remove("hidden");el("no-video").classList.add("hidden")}
+    v.pause();v.dataset.v4MediaPath="";v.removeAttribute("src");v.load();
+    if(asset(urls.video)){setMediaSrc(v,urls.video);v.classList.remove("hidden");el("no-video").classList.add("hidden")}
     else{v.classList.add("hidden");el("no-video").classList.remove("hidden")}
     const img=el("preview-thumb");
-    if(asset(urls.thumbnail)){img.src=urls.thumbnail;img.classList.remove("hidden");el("no-thumb").classList.add("hidden")}
+    if(asset(urls.thumbnail)){setMediaSrc(img,urls.thumbnail);img.classList.remove("hidden");el("no-thumb").classList.add("hidden")}
     else{img.removeAttribute("src");img.classList.add("hidden");el("no-thumb").classList.remove("hidden")}
     for(const [domName,target] of [["caption-link",urls.captions],["script-link",urls.script]]){
       const link=el(domName);const safe=asset(target);
