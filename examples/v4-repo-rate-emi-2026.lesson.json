@@ -334,7 +334,7 @@
       "scenes": [
         {
           "name": "Repo Rate और आपका Loan",
-          "narration": "Repo Rate बदलने पर क्या आपकी EMI तुरंत बदल जाती है? जरूरी नहीं। RBI की Repo Rate बैंकिंग व्यवस्था को एक नीतिगत संकेत देती है। आपके loan की दर अलग अनुबंध से तय होती है। इसलिए headline देखकर अगली EMI का अनुमान नहीं लगाना चाहिए।",
+          "narration": "Repo Rate बदलते ही आपकी EMI अगले महीने बदल जाएगी? जरूरी नहीं। RBI की Repo Rate मौद्रिक नीति का संकेत है, सीधे आपके loan की दर नहीं। बैंक तक इसका असर अलग समय पर पहुँच सकता है।",
           "claimIds": [
             "repo-def",
             "no-immediate"
@@ -351,7 +351,7 @@
         },
         {
           "name": "Fixed बनाम Floating",
-          "narration": "Floating-rate loan में benchmark और reset date महत्वपूर्ण होते हैं। Fixed-rate loan की अपनी शर्तें होती हैं। यदि नीति दर बदले, तो बैंक की lending rate तक असर देर से पहुँच सकता है। इसलिए अपने loan agreement, बैंक notice और rate reset को साथ देखकर समझें।",
+          "narration": "Floating loan में benchmark और reset date मायने रखते हैं। Fixed loan की शर्तें अलग होती हैं। इसलिए केवल खबर पढ़कर अनुमान न लगाएँ। अपना sanction letter, बैंक का notice और अगली reset date जरूर देखें।",
           "claimIds": [
             "benchmark",
             "reset",
@@ -369,7 +369,7 @@
         },
         {
           "name": "EMI से आगे समझिए",
-          "narration": "केवल EMI मत देखिए। बकाया मूलधन, ब्याज दर और बची अवधि भी महत्त्वपूर्ण हैं। दर बदलने पर EMI या tenure कैसे बदलेगा, यह आपके loan की शर्तों पर निर्भर है। सवाल है: क्या आपने अपनी अगली reset date देखी है?",
+          "narration": "सिर्फ EMI नहीं, बकाया मूलधन, ब्याज और शेष अवधि भी देखिए। दर बदलने पर EMI या tenure का असर अनुबंध तय करता है। क्या आपको अपनी अगली reset date मालूम है? उसे statement में खोजिए।",
           "claimIds": [
             "monthly-payment",
             "reset"
