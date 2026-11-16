@@ -3,7 +3,7 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const {validateVoiceManifest,captionsForScenes,srt}=require('../utils/v4-offline-course-renderer');
+const {validateVoiceManifest,captionsForScenes,srt,checkVideo,checkAssembledDuration,FINAL_LIMITS}=require('../utils/v4-offline-course-renderer');
 const {main}=require('../scripts/v4-render-course-video');
 
 function fixture(){
@@ -64,4 +64,33 @@ test('Renderer is isolated from production DB, publishing routes and paid provid
   assert.match(code,/publishingAuthorized:false/);
   assert.match(code,/autoUpload:false/);
   assert.match(code,/never overwrite/);
+});
+
+test('Video length limits vary by format while preserving codec checks',()=>{
+  const sample=duration=>({
+    duration,
+    video:{codec_name:'h264',width:1920,height:1080,r_frame_rate:'24/1'},
+    audio:{codec_name:'aac'}
+  });
+  assert.deepEqual(FINAL_LIMITS,{short:300,medium:1500,long:3600});
+  assert.doesNotThrow(()=>checkVideo(sample(450),true,FINAL_LIMITS.medium));
+  assert.doesNotThrow(()=>checkVideo(sample(1050),true,FINAL_LIMITS.long));
+  assert.throws(()=>checkVideo(sample(450),true),/profile mismatch/);
+  assert.throws(()=>checkVideo(sample(310),true,FINAL_LIMITS.short),/profile mismatch/);
+  assert.throws(()=>checkVideo(sample(120),true,3601),/ceiling/);
+  const bad=sample(500);
+  bad.video.width=1024;
+  assert.throws(()=>checkVideo(bad,true,FINAL_LIMITS.medium),/profile mismatch/);
+  bad.video.width=1920;
+  bad.audio=null;
+  assert.throws(()=>checkVideo(bad,true,FINAL_LIMITS.medium),/AAC/);
+});
+test('Final video duration must equal the rendered scene total, not just be under a ceiling',()=>{
+  assert.equal(checkAssembledDuration('short',[14,14,14],42.1),42);
+  assert.equal(checkAssembledDuration('medium',[100,100,100,100,100],500.15),500);
+  assert.equal(checkAssembledDuration('long',[100,100,100,100,100,100,100,100,100,100],1000.4),1000);
+  assert.throws(()=>checkAssembledDuration('medium',[100,100,100,100,100],450),/duration mismatch/);
+  assert.throws(()=>checkAssembledDuration('short',[110,110,110],330),/duration mismatch/);
+  assert.throws(()=>checkAssembledDuration('long',[125],125),/invalid assembled duration/);
+  assert.throws(()=>checkAssembledDuration('../../escape',[10],10),/invalid assembled duration/);
 });

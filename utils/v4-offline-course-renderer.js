@@ -20,6 +20,7 @@ const BROWSER=path.join(process.env.PREFIX||'/missing-termux-prefix','bin','chro
 const GSAP_HASH='92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb';
 const FILES=['hyperframes.json','package.json','digvijayeconlab-video-style.css'];
 const PROFILES=new Set(['long','medium','short']);
+const FINAL_LIMITS=Object.freeze({short:300,medium:1500,long:3600});
 const SLUG=/^[a-z][a-z0-9-]{2,63}$/;
 function stop(msg){throw Error('V4_OFFLINE_RENDER: '+msg);}
 function srt(seconds){
@@ -80,11 +81,24 @@ async function probe(file){
     audio:p.streams.find(x=>x.codec_type==='audio')
   };
 }
-function checkVideo(p,wantAudio){
-  if(!p.video||p.video.codec_name!=='h264'||p.video.width!==1920||p.video.height!==1080||
-      p.video.r_frame_rate!=='24/1'||!Number.isFinite(p.duration)||p.duration<2||p.duration>180)
+function checkVideo(p,wantAudio,maxDuration=180){
+  if(!Number.isFinite(maxDuration)||maxDuration<3||maxDuration>3600)
+    stop('invalid duration ceiling');
+  if(!p||!p.video||p.video.codec_name!=='h264'||p.video.width!==1920||p.video.height!==1080||
+      p.video.r_frame_rate!=='24/1'||!Number.isFinite(p.duration)||p.duration<2||p.duration>maxDuration)
     stop('video quality/codec profile mismatch');
   if(wantAudio && (!p.audio||p.audio.codec_name!=='aac'))stop('missing AAC voice in render');
+}
+function checkAssembledDuration(format,parts,duration){
+  if(!Object.hasOwn(FINAL_LIMITS,format)||!Array.isArray(parts)||parts.length<1||
+     parts.length>24||parts.some(d=>!Number.isFinite(d)||d<2||d>120)||
+     !Number.isFinite(duration))
+    stop('invalid assembled duration inputs');
+  const expected=parts.reduce((sum,d)=>sum+d,0);
+  if(duration>FINAL_LIMITS[format]||
+     Math.abs(duration-expected)>Math.max(.75,parts.length*.18))
+    stop('assembled video duration mismatch');
+  return expected;
 }
 function validateVoiceManifest(voice,story){
   if(!voice||voice.schemaVersion!==1||voice.topicId!==story.topicId||
@@ -228,8 +242,10 @@ async function renderCourseVideo(topic,format,{progress=()=>{}}={}){
     await run('ffmpeg',['-nostdin','-v','error','-n','-f','concat','-safe','1','-i',concatList,
       '-c','copy','-movflags','+faststart',final],stage,240000,env);
     const metadata=await probe(final);
-    checkVideo(metadata,true);
-    await run('ffmpeg',['-nostdin','-v','error','-i',final,'-f','null','-'],stage,240000,env);
+    checkVideo(metadata,true,FINAL_LIMITS[format]);
+    checkAssembledDuration(format,actualLengths,metadata.duration);
+    const decodeTimeout=Math.min(1800000,Math.max(240000,Math.ceil(metadata.duration*1500)));
+    await run('ffmpeg',['-nostdin','-v','error','-i',final,'-f','null','-'],stage,decodeTimeout,env);
     const srtText=captionsForScenes(voice,actualLengths);
     await fs.writeFile(path.join(stage,'captions.srt'),srtText,{flag:'wx',mode:0o600});
     const thumb=path.join(stage,'thumbnail.jpg');
@@ -261,4 +277,4 @@ async function renderCourseVideo(topic,format,{progress=()=>{}}={}){
     throw e;
   }
 }
-module.exports={renderCourseVideo,validateVoiceManifest,captionsForScenes,srt};
+module.exports={renderCourseVideo,validateVoiceManifest,captionsForScenes,srt,checkVideo,checkAssembledDuration,FINAL_LIMITS};
