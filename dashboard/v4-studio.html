@@ -57,6 +57,12 @@ button{cursor:pointer}button:hover{border-color:var(--cyan)}button:disabled{opac
 <p id="v4-readiness-status" class="small"></p>
 </section>
 <section class="panel">
+<h2>Verified-template offline pilot</h2>
+<p class="small">केवल Demand &amp; Supply का pinned V4 pilot. पुराने Host V10 WAV reuse होंगे। नई TTS आवाज़ या unrelated topics generate नहीं होंगे। Output PUBLIC नहीं होगा।</p>
+<div class="bar"><button id="v4-pilot-generate" type="button" disabled>Offline pilot unavailable</button><span id="v4-pilot-state" class="state">Checking…</span></div>
+<div id="v4-pilot-gallery" class="cards"></div>
+</section>
+<section class="panel">
 <h2>Local V4 scene renders</h2>
 <p class="small">Preview of previously rendered offline V4 drafts and Android export files. This gallery is read-only.</p>
 <div id="v4-gallery" class="cards"><p class="muted">Scanning local V4 artifacts…</p></div>
@@ -122,6 +128,43 @@ async function refreshReadiness(){
   area.replaceChildren(txt("p","Cannot read local readiness: "+e.message,"small"));
   msg.textContent="Unverified";
  }
+}
+async function refreshPilot(){
+  const btn=el("v4-pilot-generate"),st=el("v4-pilot-state"),gallery=el("v4-pilot-gallery");
+  try {
+    const data=await api("/api/v4-pilot/status");
+    const enabled=data.runnerAvailable===true;
+    btn.disabled=!enabled || data.running===true || data.state!=="not_generated";
+    btn.textContent=data.running?"Rendering offline pilot…":enabled?"Generate one Demand & Supply review pilot":"Offline pilot disabled on device";
+    st.textContent=data.stage&&data.stage!=="idle"?data.stage.replaceAll("_"," "):data.state.replaceAll("_"," ");
+    gallery.replaceChildren();
+    if(data.media){
+      const videoCard=txt("article","","tile");
+      const vid=h("video");vid.controls=true;vid.playsInline=true;vid.preload="metadata";vid.src=data.media.video;
+      videoCard.append(vid,txt("div","Finished review-only MP4","tile-inner"));gallery.append(videoCard);
+      const thumbCard=txt("article","","tile");
+      addAsset(thumbCard,data.media.thumbnail,"img");
+      thumbCard.append(txt("div","Thumbnail","tile-inner"));gallery.append(thumbCard);
+      (data.media.scenes||[]).forEach((src,i)=>{
+        const item=txt("article","","tile");addAsset(item,src,"img");
+        item.append(txt("div","Scene "+(i+1),"tile-inner"));gallery.append(item);
+      });
+    }else{
+      gallery.append(txt("p",data.error||"Rendering disabled or no completed pilot yet. Old outputs remain untouched.","muted"));
+    }
+  }catch(e){
+    st.textContent="Unavailable";
+    gallery.replaceChildren(txt("p",e.message,"small"));
+  }
+}
+async function generatePilot(){
+  if(!confirm("One verified Demand & Supply offline pilot only. No paid API, voice change or YouTube upload. Continue?"))return;
+  const b=el("v4-pilot-generate");b.disabled=true;
+  try{
+    await api("/api/v4-pilot/generate",{method:"POST",body:JSON.stringify({})});
+    message("V4 offline pilot queued for review. No publication will occur.");
+  }catch(e){message(e.message,true)}
+  finally{await refreshPilot()}
 }
 async function refreshV4(){
  const gallery=el("v4-gallery");
@@ -206,6 +249,7 @@ async function refresh(){
   if(!cards.childNodes.length)cards.append(txt("p","No videos yet. Start a draft or activate existing scheduler.","muted"));
   await refreshV4();
   await refreshReadiness();
+  await refreshPilot();
   el("last").textContent="Updated "+new Date().toLocaleTimeString();
   message("Local production data loaded");
   if(activeId&&!items.some(x=>String(x.id)===activeId))el("detail").classList.add("hidden");
@@ -263,6 +307,7 @@ async function generate(){
  finally{el("generate").disabled=false}
 }
 el("refresh").addEventListener("click",refresh);
+el("v4-pilot-generate").addEventListener("click",generatePilot);
 // The V4 generation action is intentionally disabled until the offline engine passes production gates.
 el("close").addEventListener("click",()=>{el("detail-video").pause();el("detail").classList.add("hidden");activeId=null;});
 refresh();setInterval(()=>{if(!document.hidden)refresh()},20000);
